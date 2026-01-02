@@ -4,6 +4,7 @@ pkgs.mkShell {
   nativeBuildInputs = with pkgs; [
     gcc            # oder clang
     cmake
+    git
     #gnumake
     #gdb            # Debugger
     #pkg-config
