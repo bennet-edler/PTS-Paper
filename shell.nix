@@ -5,6 +5,7 @@ pkgs.mkShell {
     gcc            # oder clang
     cmake
     git
+    gtest # google test
     #gnumake
     #gdb            # Debugger
     #pkg-config

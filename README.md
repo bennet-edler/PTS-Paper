@@ -19,3 +19,8 @@ cmake --build build
 ```bash
 ./build/program
 ```
+
+## Tests
+```bash
+./build/run_tests
+```
