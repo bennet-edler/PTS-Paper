@@ -10,7 +10,7 @@ TEST(Index_Tree_Tests, GetNextGap_GetsCorrectGap) {
 TEST(Gap_Manager_Tests, GetEarliestTimeToPlace_ReturnsCorrectTime) {
   Gap_Manager gap_manager(100);
   Job job(10,10);
-  uint time = gap_manager.get_earliest_time_to_place(job);
+  uint time = gap_manager.update_earliest_time_to_place(job);
   EXPECT_EQ(time, 0);
 }
 
@@ -23,7 +23,7 @@ TEST(Gap_Manager_Tests, GetEarliestTimeToPlace_ReturnsZeroInitially) {
   }
 
   Job job(10,60);
-  uint time = gap_manager.get_earliest_time_to_place(job);
+  uint time = gap_manager.update_earliest_time_to_place(job);
   EXPECT_EQ(time, 10);
 }
 
@@ -52,15 +52,15 @@ TEST(Gap_Manager_Tests, GetEarliestTimeToPlace_UpdatesAvailableMachinesInGapCorr
   EXPECT_EQ(gap_manager.current_time, 0);
   {
     Job job(10, 500);
-    uint time = gap_manager.get_earliest_time_to_place(job);
-    EXPECT_EQ(time, 0);
+    uint time = gap_manager.update_earliest_time_to_place(job);
+EXPECT_EQ(time, 0);
     gap_manager.place_job_at(0, job);
     EXPECT_EQ(gap_manager.current_time, 0);
     EXPECT_EQ(gap_manager.available_machines_in_gap, 500);
   }
   {
     Job job(15, 499);
-    uint time = gap_manager.get_earliest_time_to_place(job);
+    uint time = gap_manager.update_earliest_time_to_place(job);
     EXPECT_EQ(time, 0);
     gap_manager.place_job_at(0, job);
     EXPECT_EQ(gap_manager.current_time, 0);
@@ -69,9 +69,56 @@ TEST(Gap_Manager_Tests, GetEarliestTimeToPlace_UpdatesAvailableMachinesInGapCorr
 
   {
     Job job(10, 2);
-    uint time = gap_manager.get_earliest_time_to_place(job);
+    uint time = gap_manager.update_earliest_time_to_place(job);
     EXPECT_EQ(time, 10);
     EXPECT_EQ(gap_manager.current_time, 10);
     EXPECT_EQ(gap_manager.available_machines_in_gap, 501);
   }
 }
+
+// SCHEDULE
+TEST(Schedule_Tests, ListScheduleWorksCorrect) {
+  // Job(processing_time, required_machines)
+  Job_List jobs = {
+    {10, 80}, // J1
+    {15, 70}, // J2
+    {30, 60}, // J3
+    {20, 50}, // J4
+    {35, 50}, // J5
+    {10, 40}, // J6
+    {10, 25}, // J7
+    {10, 20}, // J8
+    {10, 10}, // J9
+    {10, 9},  // J10
+    {10, 8}   // J11
+  };
+
+  Schedule schedule(100, jobs.size());
+  schedule.list_schedule(jobs);
+  jobs = schedule.jobs;
+
+  // I expect them here in the order in which they will be placed
+  // at the correct time
+  EXPECT_EQ(jobs[0].starting_time.value(), 0);  // J1
+  EXPECT_EQ(jobs[1].starting_time.value(), 0);  // J8
+  EXPECT_EQ(jobs[2].starting_time.value(), 10); // J2
+  EXPECT_EQ(jobs[3].starting_time.value(), 10); // J7
+  EXPECT_EQ(jobs[4].starting_time.value(), 20); // J9
+  EXPECT_EQ(jobs[5].starting_time.value(), 20); // J10
+  EXPECT_EQ(jobs[6].starting_time.value(), 20); // J11
+  EXPECT_EQ(jobs[7].starting_time.value(), 25); // J3
+  EXPECT_EQ(jobs[8].starting_time.value(), 30); // J6
+  EXPECT_EQ(jobs[9].starting_time.value(), 55); // J4 || J5
+  EXPECT_EQ(jobs[10].starting_time.value(),55); // J4 || J5
+}
+
+
+
+
+
+
+
+
+
+
+

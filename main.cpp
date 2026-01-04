@@ -1,37 +1,7 @@
-#include <iostream>
-#include <vector>
-#include <cstdint>
-#include <optional>
-#include <list>
 
 #include "types.hpp"
 
 
-// --- SCHEDULE --- {{{
-class Schedule {
-public:
-  uint m;
-  uint n;
-  Job_List jobs;
-
-  /* Gap_List gap_list; */
-
-  Schedule(uint m, uint n, Job_List jobs) 
-    : m(m), n(n), jobs(jobs)
-  {
-    
-  }
-
-  void list_schedule(Job job) {}
-
-  void list_schedule(Job_List jobs) {}
-
-  void on_two_stacks(Job job) {}
-
-  void on_two_stacks(Job_List job) {}
-
-};
-// }}}
 
 // --- TOWER_SCHEDULE --- {{{
 class Tower_Schedule {

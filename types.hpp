@@ -1,6 +1,11 @@
 #pragma once
 
 #include <optional>
+#include <iostream>
+#include <vector>
+#include <cstdint>
+#include <list>
+#include <set>
 
 // order statistic tree
 #include <ext/pb_ds/assoc_container.hpp>
@@ -88,9 +93,8 @@ public:
       available_machines_in_gap += additional_machines;
   }
   
-  uint get_earliest_time_to_place(Job job) {
-    while(available_machines_in_gap <= job.required_machines) {
-      cout << available_machines_in_gap << endl;
+  uint update_earliest_time_to_place(Job job) {
+    while(available_machines_in_gap < job.required_machines) {
       optional<Gap> opt_gap = gaps.get_next_gap(current_time+1);
       if(opt_gap.has_value()) {
         Gap gap = opt_gap.value();
@@ -98,13 +102,12 @@ public:
         available_machines_in_gap += gap.additional_machines;
       }
       else
-        break;
+        break; // TODO: should never happen right?
     }
     return current_time;
   }
 
 /* private: */
-  /* list<uint> gaps;  // gaps sorted by start_time */
   
   indexed_tree gaps;
 
@@ -112,3 +115,76 @@ public:
   uint current_time = 0;                  
   uint available_machines_in_gap = m;
 };
+
+
+
+const uint INVALID_TIME = std::numeric_limits<uint>::max();
+
+class Schedule {
+public:
+  uint m;
+  uint n;
+  Job_List jobs;
+  Gap_Manager gap_manager;
+
+  /* Gap_List gap_list; */
+
+  Schedule(uint m, uint n) 
+    : m(m), gap_manager(m)
+  {
+    /* jobs.capacity(n); */
+    // sort jobs
+    // ...
+  }
+
+  void schedule_job(Job& job, uint time = INVALID_TIME) {
+    if(time == INVALID_TIME)
+      time = gap_manager.update_earliest_time_to_place(job);
+
+    gap_manager.place_job_at(time, job);
+
+    job.starting_time = time;
+    jobs.push_back(job);
+  }
+
+  void list_schedule(Job_List jobs) {
+    multiset<pair<uint, size_t>> job_pool;
+
+    for(size_t i = 0; i < jobs.size(); i++) 
+      job_pool.insert({jobs[i].required_machines, i});
+
+    while(!job_pool.empty()) {
+      auto min_job_iterator = job_pool.begin(); 
+      // index i with jobs[i] has lowest required machines 
+      uint min_job_index = min_job_iterator->second;
+      Job min_job = jobs[min_job_index];
+
+      uint time = gap_manager.update_earliest_time_to_place(min_job);
+      uint available_machines = gap_manager.available_machines_in_gap;
+
+      // find index i where jobs[i].required_machines is the smallest value ..
+      // such that jobs[i].required_machines > available_machines
+      // upper_bound returns the first key which is larger available machines ..
+      // and with value larger than <size_t>::max() ..
+      // (this ensures that the key is larger available_machines)
+      auto large_job_iterator = 
+        job_pool.upper_bound({available_machines, numeric_limits<size_t>::max()});
+
+      // take the previous key
+      // large_jobs_iterator must be larger than job_pool.begin() at this time
+      --large_job_iterator; 
+      uint large_job_index = large_job_iterator->second;
+      Job large_job = jobs[large_job_index];
+
+      schedule_job(jobs[large_job_index], time);
+      job_pool.erase(large_job_iterator);
+    }
+  }
+
+  void on_two_stacks(Job job) {}
+
+  void on_two_stacks(Job_List job) {}
+
+};
+
+
