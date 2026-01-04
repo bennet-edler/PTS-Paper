@@ -95,7 +95,7 @@ TEST(Schedule_Tests, ListScheduleWorksCorrect) {
 
   Schedule schedule(100, jobs.size());
   schedule.list_schedule(jobs);
-  jobs = schedule.jobs;
+  jobs = schedule.placed_jobs;
 
   // I expect them here in the order in which they will be placed
   // at the correct time
@@ -111,6 +111,39 @@ TEST(Schedule_Tests, ListScheduleWorksCorrect) {
   EXPECT_EQ(jobs[9].starting_time.value(), 55); // J4 || J5
   EXPECT_EQ(jobs[10].starting_time.value(),55); // J4 || J5
 }
+
+
+TEST(Schedule_Tests, OnTwoStackWorksCorrectly) {
+  // Job(processing_time, required_machines)
+  Job_List jobs = {
+    {20, 50}, // J1
+    {35, 50}, // J2
+    {10, 40}, // J3
+    {10, 25}, // J4
+    {10, 20}, // J5
+    {10, 10}, // J6
+    {10, 9},  // J7
+    {10, 8}   // J8
+  };
+
+  Schedule schedule(100, jobs.size());
+  schedule.on_two_stacks(jobs);
+  jobs = schedule.placed_jobs;
+
+  // I expect them here in the order in which they will be placed
+  // at the correct time
+  EXPECT_EQ(jobs[0].starting_time.value(), 0);  // J1 || J2
+  EXPECT_EQ(jobs[1].starting_time.value(), 0);  // J1 || J2
+  EXPECT_EQ(jobs[2].starting_time.value(), 20); // J3
+  EXPECT_EQ(jobs[3].starting_time.value(), 30); // J4
+  EXPECT_EQ(jobs[4].starting_time.value(), 35); // J5
+  EXPECT_EQ(jobs[5].starting_time.value(), 40); // J6
+  EXPECT_EQ(jobs[6].starting_time.value(), 45); // J7
+  EXPECT_EQ(jobs[7].starting_time.value(), 50); // J8
+}
+
+
+
 
 
 

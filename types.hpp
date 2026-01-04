@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <list>
 #include <set>
+#include <algorithm>
 
 // order statistic tree
 #include <ext/pb_ds/assoc_container.hpp>
@@ -124,7 +125,7 @@ class Schedule {
 public:
   uint m;
   uint n;
-  Job_List jobs;
+  Job_List placed_jobs;
   Gap_Manager gap_manager;
 
   /* Gap_List gap_list; */
@@ -132,6 +133,9 @@ public:
   Schedule(uint m, uint n) 
     : m(m), gap_manager(m)
   {
+    if(m<2)
+      throw runtime_error("need to have at least 2 machines");
+
     /* jobs.capacity(n); */
     // sort jobs
     // ...
@@ -144,7 +148,7 @@ public:
     gap_manager.place_job_at(time, job);
 
     job.starting_time = time;
-    jobs.push_back(job);
+    placed_jobs.push_back(job);
   }
 
   void list_schedule(Job_List jobs) {
@@ -181,10 +185,28 @@ public:
     }
   }
 
-  void on_two_stacks(Job job) {}
+  // jobs need to have machine requirement at most m/2
+  void on_two_stacks(Job_List jobs) {
+    // sort decreasingly by required_machines
+    sort(jobs.begin(), jobs.end(), [](const Job& j1, const Job& j2) {
+        return j1.required_machines > j2.required_machines;
+    });
 
-  void on_two_stacks(Job_List job) {}
+    Job dummy_job(1, 1);    // required_machines = 1
 
+    for(Job& job : jobs) {
+      uint time = gap_manager.update_earliest_time_to_place(dummy_job);
+
+      if(gap_manager.available_machines_in_gap == m-1)
+        gap_manager.place_job_at(time, Job(job.processing_time, m-1));
+      else  // == 1
+        gap_manager.place_job_at(time, Job(job.processing_time, 1));
+
+      job.starting_time = time;
+      placed_jobs.push_back(job);
+      
+    }
+  }
 };
 
 
