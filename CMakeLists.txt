@@ -23,7 +23,11 @@ target_link_libraries(program lib)
 
 # test program
 add_executable(run_tests tests.cpp)
-target_link_libraries(run_tests lib GTest::gtest_main)
+target_link_libraries(run_tests 
+  lib 
+  GTest::gmock
+  GTest::gtest_main
+)
 gtest_discover_tests(run_tests)
 
 

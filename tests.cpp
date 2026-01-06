@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 #include "types.hpp"
 
 // INDEX TREE
@@ -53,7 +54,7 @@ TEST(Gap_Manager_Tests, GetEarliestTimeToPlace_UpdatesAvailableMachinesInGapCorr
   {
     Job job(10, 500);
     uint time = gap_manager.update_earliest_time_to_place(job);
-EXPECT_EQ(time, 0);
+    EXPECT_EQ(time, 0);
     gap_manager.place_job_at(0, job);
     EXPECT_EQ(gap_manager.current_time, 0);
     EXPECT_EQ(gap_manager.available_machines_in_gap, 500);
@@ -66,7 +67,6 @@ EXPECT_EQ(time, 0);
     EXPECT_EQ(gap_manager.current_time, 0);
     EXPECT_EQ(gap_manager.available_machines_in_gap, 1);
   }
-
   {
     Job job(10, 2);
     uint time = gap_manager.update_earliest_time_to_place(job);
@@ -74,6 +74,33 @@ EXPECT_EQ(time, 0);
     EXPECT_EQ(gap_manager.current_time, 10);
     EXPECT_EQ(gap_manager.available_machines_in_gap, 501);
   }
+}
+
+TEST(Gap_Manager_Tests, BuildInverseAbsoluteGapsWorks) {
+  Gap_Manager gap_manager(10);
+  gap_manager.gaps[0] =  4;
+  gap_manager.gaps[1] =  1;
+  gap_manager.gaps[2] =  2;
+  gap_manager.gaps[3] = -3;
+  gap_manager.gaps[4] =  2;
+  gap_manager.gaps[6] =  4;
+  gap_manager.gaps[7] = -2;
+  gap_manager.gaps[8] =  2;
+
+  gap_manager.makespan = 8;
+
+  map<uint,uint> inverse_absolute_gaps = 
+    gap_manager.build_inverse_absolute_gaps();
+
+  EXPECT_EQ(inverse_absolute_gaps[0], 10);
+  EXPECT_EQ(inverse_absolute_gaps[1],  8);
+  EXPECT_EQ(inverse_absolute_gaps[2], 10);
+  EXPECT_EQ(inverse_absolute_gaps[4],  6);
+  EXPECT_EQ(inverse_absolute_gaps[5],  4);
+  EXPECT_EQ(inverse_absolute_gaps[6],  7);
+  EXPECT_EQ(inverse_absolute_gaps[7],  5);
+  EXPECT_EQ(inverse_absolute_gaps[8],  4);
+
 }
 
 // SCHEDULE
@@ -113,7 +140,7 @@ TEST(Schedule_Tests, ListScheduleWorksCorrect) {
 }
 
 
-TEST(Schedule_Tests, OnTwoStackWorksCorrectly) {
+TEST(Schedule_Tests, OnTwoStackWorksCorrect) {
   // Job(processing_time, required_machines)
   Job_List jobs = {
     {20, 50}, // J1
@@ -140,6 +167,78 @@ TEST(Schedule_Tests, OnTwoStackWorksCorrectly) {
   EXPECT_EQ(jobs[5].starting_time.value(), 40); // J6
   EXPECT_EQ(jobs[6].starting_time.value(), 45); // J7
   EXPECT_EQ(jobs[7].starting_time.value(), 50); // J8
+}
+
+
+class Mock_Gap_Manager : public Gap_Manager {
+public:
+    Mock_Gap_Manager(uint m) : Gap_Manager(m) {}
+    MOCK_METHOD((std::map<uint, uint>), build_inverse_absolute_gaps, (), (override));
+};
+
+TEST(Schedule_Tests, ScheduleDownWorksCorrect) {
+  Job_List jobs = {
+    Job(2,10),  // J1  (not scheduled)
+    Job(2, 8),  // J2
+    Job(1, 6),  // J3
+    Job(5, 4),  // J4  (not scheduled)
+    Job(2, 3),  // J5
+    Job(3, 2),  // J6  (not scheduled)
+    Job(1, 1)   // J7  
+  };
+
+  map<uint,uint> inverse_absolute_gaps;
+  inverse_absolute_gaps[0] = 11;
+  inverse_absolute_gaps[1] = 10;
+  inverse_absolute_gaps[3] =  8;
+  inverse_absolute_gaps[5] =  4;
+  inverse_absolute_gaps[7] =  2;
+  inverse_absolute_gaps[9] =  0;
+
+  auto gap_manager = make_shared<Mock_Gap_Manager>(11);
+  EXPECT_CALL(*gap_manager, build_inverse_absolute_gaps())
+    .WillOnce(testing::Return(inverse_absolute_gaps));
+
+  gap_manager->makespan = 9;
+
+  Schedule schedule(11, 6);
+  schedule.gap_manager = gap_manager;
+  Job_List unscheduled_jobs = schedule.schedule_down(jobs);
+
+
+  Job J1 = unscheduled_jobs[0];
+  Job J4 = unscheduled_jobs[1];
+  Job J6 = unscheduled_jobs[2];
+  
+  Job J2 = schedule.placed_jobs[3];
+  Job J3 = schedule.placed_jobs[2];
+  Job J5 = schedule.placed_jobs[1];
+  Job J7 = schedule.placed_jobs[0];
+
+  EXPECT_EQ(J1.processing_time, 2);
+  EXPECT_EQ(J1.required_machines, 10);
+
+  EXPECT_EQ(J2.processing_time, 2);
+  EXPECT_EQ(J2.required_machines, 8);
+  EXPECT_EQ(J2.starting_time, 7);
+
+  EXPECT_EQ(J3.processing_time, 1);
+  EXPECT_EQ(J3.required_machines, 6);
+  EXPECT_EQ(J3.starting_time, 6);
+
+  EXPECT_EQ(J4.processing_time, 5);
+  EXPECT_EQ(J4.required_machines, 4);
+
+  EXPECT_EQ(J5.processing_time, 2);
+  EXPECT_EQ(J5.required_machines, 3);
+  EXPECT_EQ(J5.starting_time, 4);
+
+  EXPECT_EQ(J6.processing_time, 3);
+  EXPECT_EQ(J6.required_machines, 2);
+
+  EXPECT_EQ(J7.processing_time, 1);
+  EXPECT_EQ(J7.required_machines, 1);
+  EXPECT_EQ(J7.starting_time, 3);
 }
 
 

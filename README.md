@@ -1,6 +1,6 @@
 # Implementation of ...
 
-## Use Dependencies (on nixos)
+## Install Dependencies on nixos (optional)
 ```bash
 nix-shell
 ```
