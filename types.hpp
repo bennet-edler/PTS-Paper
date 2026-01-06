@@ -205,7 +205,7 @@ public:
     if(time == INVALID_TIME)
       time = gap_manager->update_earliest_time_to_place(job);
 
-    gap_manager->place_job_at(time, job);
+    gap_manager->place_job_at(time, job); // TODO: switch time and job
 
     job.starting_time = time;
     placed_jobs.push_back(job);
@@ -257,20 +257,16 @@ public:
     });
 
     Job dummy_job(1, 1);    // required_machines = 1
-
+    Gap_Manager dummy_gap_manager = *gap_manager;
     for(Job& job : jobs) {
-      uint time = gap_manager->update_earliest_time_to_place(dummy_job);
+      uint time = dummy_gap_manager.update_earliest_time_to_place(dummy_job);
 
-      if(gap_manager->available_machines_in_gap == m-1)
-        gap_manager->place_job_at(time, Job(job.processing_time, m-1));
+      if(dummy_gap_manager.available_machines_in_gap == m-1)
+        dummy_gap_manager.place_job_at(time, Job(job.processing_time, m-1));
       else  // == 1
-        gap_manager->place_job_at(time, Job(job.processing_time, 1));
+        dummy_gap_manager.place_job_at(time, Job(job.processing_time, 1));
       
-      // TODO: place jobs correctly: use a copy of the gap_manager for the logic and 
-      // then use schedule_job to actually place it
-      job.starting_time = time;
-      placed_jobs.push_back(job);
-      
+      schedule_job(job, time);
     }
   }
 
