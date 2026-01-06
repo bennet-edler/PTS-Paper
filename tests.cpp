@@ -20,7 +20,7 @@ TEST(Gap_Manager_Tests, GetEarliestTimeToPlace_ReturnsZeroInitially) {
 
   {
     Job job(10,60); // proccesing_time, required_machines
-    gap_manager.place_job_at(0, job);
+    gap_manager.place_job_at(job, 0);
   }
 
   Job job(10,60);
@@ -55,7 +55,7 @@ TEST(Gap_Manager_Tests, GetEarliestTimeToPlace_UpdatesAvailableMachinesInGapCorr
     Job job(10, 500);
     uint time = gap_manager.update_earliest_time_to_place(job);
     EXPECT_EQ(time, 0);
-    gap_manager.place_job_at(0, job);
+    gap_manager.place_job_at(job, 0);
     EXPECT_EQ(gap_manager.current_time, 0);
     EXPECT_EQ(gap_manager.available_machines_in_gap, 500);
   }
@@ -63,7 +63,7 @@ TEST(Gap_Manager_Tests, GetEarliestTimeToPlace_UpdatesAvailableMachinesInGapCorr
     Job job(15, 499);
     uint time = gap_manager.update_earliest_time_to_place(job);
     EXPECT_EQ(time, 0);
-    gap_manager.place_job_at(0, job);
+    gap_manager.place_job_at(job, 0);
     EXPECT_EQ(gap_manager.current_time, 0);
     EXPECT_EQ(gap_manager.available_machines_in_gap, 1);
   }

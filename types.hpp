@@ -96,7 +96,7 @@ public:
     available_machines_in_gap = m;
   }
 
-  void place_job_at(uint time, Job job) {
+  void place_job_at(Job job, uint time) {
     // available machines at starttime reduced
     add_additional_machines_at(time,                    -job.required_machines); 
     // available machines at endtime increased
@@ -205,7 +205,7 @@ public:
     if(time == INVALID_TIME)
       time = gap_manager->update_earliest_time_to_place(job);
 
-    gap_manager->place_job_at(time, job); // TODO: switch time and job
+    gap_manager->place_job_at(job, time); 
 
     job.starting_time = time;
     placed_jobs.push_back(job);
@@ -262,9 +262,9 @@ public:
       uint time = dummy_gap_manager.update_earliest_time_to_place(dummy_job);
 
       if(dummy_gap_manager.available_machines_in_gap == m-1)
-        dummy_gap_manager.place_job_at(time, Job(job.processing_time, m-1));
+        dummy_gap_manager.place_job_at(Job(job.processing_time, m-1), time);
       else  // == 1
-        dummy_gap_manager.place_job_at(time, Job(job.processing_time, 1));
+        dummy_gap_manager.place_job_at(Job(job.processing_time, 1), time);
       
       schedule_job(job, time);
     }
