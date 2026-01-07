@@ -334,15 +334,12 @@ public:
   // the remaining jobs will be scheduled in s2
   // TODO: tests
   // TODO: ordered list of separation_times (for mcs)
-  void split_at(uint separation_time, Schedule& s1, Schedule& s2) {
+  void split_at(uint separation_time, Schedule& lower_schedule, Schedule& upper_schedule) {
     for(auto& job : placed_jobs) {
-      if(job.starting_time.value() >= separation_time)
-        s1.placed_jobs.push_back(job);
-      else {
-        Job new_job(job.processing_time, job.required_machines);
-        new_job.starting_time = job.starting_time - separation_time;
-        s2.placed_jobs.push_back(new_job);
-      }
+      if(job.starting_time.value() < separation_time)
+        lower_schedule.schedule_job(job, job.starting_time.value());
+      else 
+        upper_schedule.schedule_job(job, job.starting_time.value() - separation_time);
     }
   }
 

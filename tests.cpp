@@ -322,6 +322,67 @@ TEST(Schedule_Tests, ScheduleAndUnschedule) {
   EXPECT_EQ(J4.starting_time.value(), 4);
 }
 
+TEST(Schedule_Tests, SplitAt) {
+  uint m = 10;
+  uint n = 9;
+  
+  Job_List jobs = {
+    Job(3, 2),
+    Job(2, 2),
+    Job(2, 3),
+    Job(3, 3),
+    Job(3, 5),
+    Job(4, 2),
+    Job(2, 3),
+    Job(2, 2),
+    Job(2, 6)
+  };
+
+  Schedule schedule(m,n);
+  schedule.schedule_job(jobs[0], 0);
+  schedule.schedule_job(jobs[1], 0);
+  schedule.schedule_job(jobs[2], 0);
+  schedule.schedule_job(jobs[3], 0);
+  schedule.schedule_job(jobs[4], 2);
+  schedule.schedule_job(jobs[5], 3);
+  schedule.schedule_job(jobs[6], 3);
+  schedule.schedule_job(jobs[7], 5);
+  schedule.schedule_job(jobs[8], 5);
+
+  EXPECT_EQ(schedule.gap_manager->gaps[0], 0);
+  EXPECT_EQ(schedule.gap_manager->gaps[1], 0);
+  EXPECT_EQ(schedule.gap_manager->gaps[2], 0);
+  EXPECT_EQ(schedule.gap_manager->gaps[3], 0);
+  EXPECT_EQ(schedule.gap_manager->gaps[4], 0);
+  EXPECT_EQ(schedule.gap_manager->gaps[5], 0);
+  EXPECT_EQ(schedule.gap_manager->gaps[6], 0);
+  EXPECT_EQ(schedule.gap_manager->gaps[7], m);
+
+  Schedule s1(m,n), s2(m,n);
+  schedule.split_at(3, s1, s2);
+
+  EXPECT_EQ(s1.placed_jobs.size(), 5);
+  EXPECT_EQ(s2.placed_jobs.size(), 4);
+
+  EXPECT_EQ(s1.gap_manager->gaps[0], 0);
+  EXPECT_EQ(s1.gap_manager->gaps[1], 0);
+  EXPECT_EQ(s1.gap_manager->gaps[2], 0);
+  EXPECT_EQ(s1.gap_manager->gaps[3], 5);
+  EXPECT_EQ(s1.gap_manager->gaps[4], 0);
+  EXPECT_EQ(s1.gap_manager->gaps[5], 5);
+  EXPECT_EQ(s1.gap_manager->gaps[6], 0);
+  EXPECT_EQ(s1.gap_manager->gaps[7], 0);
+
+  EXPECT_EQ(s2.gap_manager->gaps[0], 5);
+  EXPECT_EQ(s2.gap_manager->gaps[1], 0);
+  EXPECT_EQ(s2.gap_manager->gaps[2], -5);
+  EXPECT_EQ(s2.gap_manager->gaps[3], 0);
+  EXPECT_EQ(s2.gap_manager->gaps[4], m);
+  EXPECT_EQ(s2.gap_manager->gaps[5], 0);
+  EXPECT_EQ(s2.gap_manager->gaps[6], 0);
+  EXPECT_EQ(s2.gap_manager->gaps[7], 0);
+
+}
 
 
 
