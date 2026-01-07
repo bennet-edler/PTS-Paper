@@ -244,6 +244,85 @@ TEST(Schedule_Tests, ScheduleDownWorksCorrect) {
 
 
 
+TEST(Schedule_Tests, ScheduleAndUnschedule) {
+  Job_List jobs = {
+    Job(2,10),  // J1  
+    Job(2, 8),  // J2
+    Job(1, 6),  // J3
+    Job(5, 4),  // J4  
+    Job(2, 3),  // J5
+    Job(3, 2),  // J6  
+    Job(1, 1)   // J7  
+  };
+  uint m = 10;
+  uint n = 7;
+
+  Schedule schedule(m, n);
+  schedule.schedule_job(jobs[0],0);
+  EXPECT_EQ(schedule.gap_manager->gaps[0], 0);
+  EXPECT_EQ(schedule.gap_manager->gaps[1], 0);
+  EXPECT_EQ(schedule.gap_manager->gaps[2], m);
+  EXPECT_EQ(schedule.placed_jobs.size(), 1);
+  
+  schedule.unschedule_jobs({0}); // remove J1
+
+  EXPECT_EQ(schedule.gap_manager->gaps[0], m);
+  EXPECT_EQ(schedule.gap_manager->gaps[1], 0);
+  EXPECT_EQ(schedule.gap_manager->gaps[2], 0);
+  EXPECT_EQ(schedule.placed_jobs.size(), 0);
+
+  schedule.schedule_job(jobs[0], 0);
+  schedule.schedule_job(jobs[1], 2);
+  schedule.schedule_job(jobs[2], 4);
+  schedule.schedule_job(jobs[3], 4);
+  schedule.schedule_job(jobs[4], 6);
+  schedule.schedule_job(jobs[5], 5);
+  schedule.schedule_job(jobs[6], 6);
+
+  EXPECT_EQ(schedule.placed_jobs.size(), 7);
+
+  EXPECT_EQ(schedule.gap_manager->gaps[0],  0);
+  EXPECT_EQ(schedule.gap_manager->gaps[1],  0);
+  EXPECT_EQ(schedule.gap_manager->gaps[2],  2);
+  EXPECT_EQ(schedule.gap_manager->gaps[3],  0);
+  EXPECT_EQ(schedule.gap_manager->gaps[4], -2);
+  EXPECT_EQ(schedule.gap_manager->gaps[5],  4);
+  EXPECT_EQ(schedule.gap_manager->gaps[6], -4);
+  EXPECT_EQ(schedule.gap_manager->gaps[7],  1);
+  EXPECT_EQ(schedule.gap_manager->gaps[8],  5);
+  EXPECT_EQ(schedule.gap_manager->gaps[9],  4);
+
+  schedule.unschedule_jobs({1,4,5,6}); // remove J2, J5, J6, J7
+  EXPECT_EQ(schedule.placed_jobs.size(), 3);
+  EXPECT_EQ(schedule.gap_manager->gaps[0],  0);
+  EXPECT_EQ(schedule.gap_manager->gaps[1],  0);
+  EXPECT_EQ(schedule.gap_manager->gaps[2],  m);
+  EXPECT_EQ(schedule.gap_manager->gaps[3],  0);
+  EXPECT_EQ(schedule.gap_manager->gaps[4], -m);
+  EXPECT_EQ(schedule.gap_manager->gaps[5],  6);
+  EXPECT_EQ(schedule.gap_manager->gaps[6],  0);
+  EXPECT_EQ(schedule.gap_manager->gaps[7],  0);
+  EXPECT_EQ(schedule.gap_manager->gaps[8],  0);
+  EXPECT_EQ(schedule.gap_manager->gaps[9],  4);
+
+  Job J1 = schedule.placed_jobs[0];
+  Job J3 = schedule.placed_jobs[1];
+  Job J4 = schedule.placed_jobs[2];
+
+  EXPECT_EQ(J1.required_machines,    10);
+  EXPECT_EQ(J1.processing_time,       2);
+  EXPECT_EQ(J1.starting_time.value(), 0);
+
+  EXPECT_EQ(J3.required_machines,     6);
+  EXPECT_EQ(J3.processing_time,       1);
+  EXPECT_EQ(J3.starting_time.value(), 4);
+
+  EXPECT_EQ(J4.required_machines,     4);
+  EXPECT_EQ(J4.processing_time,       5);
+  EXPECT_EQ(J4.starting_time.value(), 4);
+}
+
+
 
 
 

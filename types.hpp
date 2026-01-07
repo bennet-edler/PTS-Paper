@@ -214,11 +214,13 @@ public:
 
   // Expects sorted list of indices
   // TODO: does not affect the makespan. 
-  // TODO: testing
   void unschedule_jobs(vector<uint> placed_jobs_indices) {
     Job_List new_jobs;
     int current_index = 0;
-    for(int i = 0; i < placed_jobs_indices.size(); i++) {
+    for(int i = 0; i < n; i++) {
+      if(current_index == placed_jobs_indices.size())
+        break;
+
       Job job = placed_jobs[i];
       int next_remove_index = placed_jobs_indices[current_index];
 
