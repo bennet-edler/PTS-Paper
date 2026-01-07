@@ -16,6 +16,9 @@
 using namespace std;
 using namespace __gnu_pbds; // order statistic tree
 
+typedef uint32_t uint;
+typedef int32_t sint;
+
 class Job {
 public:
   Job(uint processing_time, uint required_machines) 
@@ -27,8 +30,6 @@ public:
   optional<uint> starting_time;
 };
 
-typedef uint32_t uint;
-typedef int32_t sint;
 typedef vector<Job> Job_List;
 
 struct Gap {
@@ -36,7 +37,7 @@ struct Gap {
   sint additional_machines; // machines more available at that time than in the previous gap;
 };
 
-// order statistic tree 
+// order statistic tree // TODO: replace with std::map
 // has O(log n) for indexing, searching and insertion
 typedef tree<uint,                                  // key type
              sint,                                  // value type
@@ -211,8 +212,27 @@ public:
     placed_jobs.push_back(job);
   }
 
-  void place_job(Job& job, uint time = INVALID_TIME) {
+  // Expects sorted list of indices
+  // TODO: does not affect the makespan. 
+  // TODO: testing
+  void unschedule_jobs(vector<uint> placed_jobs_indices) {
+    Job_List new_jobs;
+    int current_index = 0;
+    for(int i = 0; i < placed_jobs_indices.size(); i++) {
+      Job job = placed_jobs[i];
+      int next_remove_index = placed_jobs_indices[current_index];
 
+      if(i == next_remove_index) {
+        uint time = job.starting_time.value();
+        gap_manager->add_additional_machines_at(time,                    +job.required_machines); 
+        gap_manager->add_additional_machines_at(time+job.processing_time,-job.required_machines);
+        current_index += 1;
+      }
+      else 
+        new_jobs.push_back(job);
+    }
+
+    placed_jobs = new_jobs;
   }
 
   void list_schedule(Job_List jobs) {
@@ -307,5 +327,8 @@ public:
 
     return jobs_unused;
   }
+
+
+
 };
 
