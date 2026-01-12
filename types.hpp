@@ -320,6 +320,12 @@ public:
     });
   }
 
+  void sort_jobs_increasingly_by_starting_time(Job_List& jobs) {
+    sort(jobs.begin(), jobs.end(), [](const Job& j1, const Job& j2) {
+        return j1.starting_time < j2.starting_time || (j1.starting_time == j2.starting_time && j1.required_machines > j2.required_machines);
+    });
+  }
+
   // returns a list of jobs which were not schedule during this step
   // starts at the top and places repeatedly the widest job which fits directly below the last one
   // assumes the existing jobs are decreasingly placed in machine_requirement
@@ -383,9 +389,9 @@ public:
     else {
       // the last placed job is on the higher stack 
       Job last_job = placed_jobs[placed_jobs.size()-1];
-      uint current_time = last_job.starting_time.value();
+      uint current_time = last_job.starting_time.value()+last_job.processing_time;
       
-      for(uint i=placed_jobs.size()-1; i>= 0; i--) {
+      for(int i=placed_jobs.size()-1; i>=0; i--) {
         Job job = placed_jobs[i];
         // from there go down and get all jobs which are placed directly below
         if(current_time == job.processing_time + job.starting_time.value()){
@@ -406,7 +412,8 @@ public:
     
     schedule_jobs_on_top_of_each_other(jobs_on_higher_stack);
     schedule_jobs_on_top_of_each_other(jobs_on_lower_stack);
-    
+
+    sort_jobs_increasingly_by_starting_time(placed_jobs);
   }
 
   void schedule_jobs_on_top_of_each_other(Job_List jobs, uint start_time=0) {
