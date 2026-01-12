@@ -42,13 +42,18 @@ class Tower_Schedule {
     if(tiny_jobs.size() != 0) { // many tiny jobs
       Job_List small_and_medium_jobs = 
         remove_small_and_medium_jobs_from_schedule(sigma1);
+      
+      uint height_of_removed_jobs = height(small_and_medium_jobs);
 
       sigma2_makespan = sigma2.get_makespan();
       remove_tiny_jobs(sigma2); 
       sigma2.sort_in_higher_stack(small_and_medium_jobs);
 
       // TODO: list_scheduling_in_higher_gap(sigma1, sigma2);
-      
+      uint time1 = sigma1.get_makespan() - height_of_removed_jobs;
+      uint time2 = sigma2.get_makespan() - height_of_removed_jobs;
+      Schedule::balanced_list_scheduling(tiny_jobs, sigma1, time1, sigma2, time2);
+
     } else { // few or several tiny jobs
       // TODO (during p_max down. where the last job is \leq 4/3)
       sigma1.split_at(separation_time, sigma1T, sigma1B);       

@@ -237,38 +237,57 @@ public:
     placed_jobs = new_jobs;
   }
 
-  void list_schedule(Job_List jobs) {
+  // list schedules jobs without letting the differences of jobs placed be more than p_max
+  // makespan - balance_time is the initial upper_bound to not place jobs above
+  static void balanced_list_schedule(Job_List jobs, Schedule& sigma1, Schedule& sigma2, sint& balance_time, uint p_max) {
+    uint sigma1_old_makespan = sigma1.get_makespan();
+    uint sigma2_old_makespan = sigma2.get_makespan();
+
+    multiset<pair<uint, size_t>> job_pool = create_job_pool(jobs);
+
+    while(!job_pool.empty()) {
+      uint gap_end1 = sigma1_old_makespan - balance_time;
+      uint gap_end2 = sigma2_old_makespan - balance_time;
+
+      sigma1.list_schedule_single(/*jobs=*/jobs, /*job_pool=*/job_pool, /*until_t=*/gap_end1);
+      if(job_pool.empty())
+        return;
+
+      sigma2.list_schedule_single(/*jobs=*/jobs, /*job_pool=*/job_pool, /*until_t=*/gap_end2);
+      if(job_pool.empty())
+        return;
+
+      // get larger gap
+      auto min_job_iterator = job_pool.begin(); 
+      uint min_job_index = min_job_iterator->second;
+      Job min_job = jobs[min_job_index];
+
+      uint g1 = gap_end1-sigma1.gap_manager->update_earliest_time_to_place(min_job);
+      uint g2 = gap_end2-sigma2.gap_manager->update_earliest_time_to_place(min_job);
+
+      // update balance_time so that we have afterwards p_max time available in the larger gap 
+      // where the actual gap is the time between g1 and balance_time
+      balance_time -= p_max - max(g1,g2);
+      
+
+    }
+
+  }
+
+  static multiset<pair<uint, size_t>> create_job_pool(Job_List jobs) {
     multiset<pair<uint, size_t>> job_pool;
 
     for(size_t i = 0; i < jobs.size(); i++) 
       job_pool.insert({jobs[i].required_machines, i});
 
-    while(!job_pool.empty()) {
-      auto min_job_iterator = job_pool.begin(); 
-      // index i with jobs[i] has lowest required machines 
-      uint min_job_index = min_job_iterator->second;
-      Job min_job = jobs[min_job_index];
+    return job_pool;
+  }
 
-      uint time = gap_manager->update_earliest_time_to_place(min_job);
-      uint available_machines = gap_manager->available_machines_in_gap;
+  void list_schedule(Job_List jobs, uint until_t=INVALID_TIME) {
+    multiset<pair<uint, size_t>> job_pool = create_job_pool(jobs);
 
-      // find index i where jobs[i].required_machines is the smallest value ..
-      // such that jobs[i].required_machines > available_machines
-      // upper_bound returns the first key which is larger available machines ..
-      // and with value larger than <size_t>::max() ..
-      // (this ensures that the key is larger available_machines)
-      auto large_job_iterator = 
-        job_pool.upper_bound({available_machines, numeric_limits<size_t>::max()});
-
-      // take the previous key
-      // large_jobs_iterator must be larger than job_pool.begin() at this time
-      --large_job_iterator; 
-      uint large_job_index = large_job_iterator->second;
-      Job large_job = jobs[large_job_index];
-
-      schedule_job(jobs[large_job_index], time);
-      job_pool.erase(large_job_iterator);
-    }
+    while(!job_pool.empty())
+      list_schedule_single(/*jobs=*/jobs, /*job_pool=*/job_pool,until_t);
   }
 
   // jobs need to have machine requirement at most m/2
@@ -332,7 +351,6 @@ public:
 
   // jobs which start at or below separation_time will be scheduled in s1
   // the remaining jobs will be scheduled in s2
-  // TODO: tests
   // TODO: ordered list of separation_times (for mcs)
   void split_at(uint separation_time, Schedule& lower_schedule, Schedule& upper_schedule) {
     for(auto& job : placed_jobs) {
@@ -343,7 +361,42 @@ public:
     }
   }
 
+  uint get_makespan() {
+    return gap_manager->get_makespan();
+  }
 
+private:
+
+  // until_t ensures that no job will be executed after until_t
+  // assumes job_pool.empty()==false
+  void list_schedule_single(Job_List jobs, multiset<pair<uint, size_t>> &job_pool, uint until_t=INVALID_TIME) {
+      auto min_job_iterator = job_pool.begin(); 
+      // index i with jobs[i] has lowest required machines 
+      uint min_job_index = min_job_iterator->second;
+      Job min_job = jobs[min_job_index];
+
+      uint time = gap_manager->update_earliest_time_to_place(min_job);
+      uint available_machines = gap_manager->available_machines_in_gap;
+
+      // find index i where jobs[i].required_machines is the smallest value ..
+      // such that jobs[i].required_machines > available_machines
+      // upper_bound returns the first key which is larger available machines ..
+      // and with value larger than <size_t>::max() ..
+      // (this ensures that the key is larger available_machines)
+      auto large_job_iterator = 
+        job_pool.upper_bound({available_machines, numeric_limits<size_t>::max()});
+
+      // take the previous key
+      // large_jobs_iterator must be larger than job_pool.begin() at this time
+      --large_job_iterator; 
+      uint large_job_index = large_job_iterator->second;
+      Job large_job = jobs[large_job_index];
+      
+      if(until_t == INVALID_TIME || until_t >= time+large_job.processing_time) {
+        schedule_job(large_job, time);
+        job_pool.erase(large_job_iterator);
+      }
+  }
 
 };
 

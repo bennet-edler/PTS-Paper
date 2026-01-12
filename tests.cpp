@@ -385,11 +385,150 @@ TEST(Schedule_Tests, SplitAt) {
 }
 
 
+TEST(Schedule_Tests, BalancedListSchedule) {
+  uint m = 10;
+  uint n = 100;
+  Schedule sigma1(m,n);
+  Schedule sigma2(m,n);
+
+  sigma1.gap_manager->gaps[0]=2;
+  sigma1.gap_manager->gaps[2]=1;
+  sigma1.gap_manager->gaps[5]=1;
+  sigma1.gap_manager->gaps[8]=6;
+
+  sigma1.gap_manager->available_machines_in_gap=2;
+  sigma1.gap_manager->makespan=8;
+
+  sigma2.gap_manager->gaps[0]=1;
+  sigma2.gap_manager->gaps[3]=1;
+  sigma2.gap_manager->gaps[4]=4;
+  sigma2.gap_manager->gaps[6]=1;
+  sigma2.gap_manager->gaps[8]=1;
+  sigma2.gap_manager->gaps[10]=2;
+
+  sigma2.gap_manager->available_machines_in_gap=1;
+  sigma2.gap_manager->makespan=10;
+
+  sint h = 6;
+  uint p_max = 4;
+
+  {
+    Job_List jobs = {
+      Job(/*processing_time=*/3, /*required_machines=*/1),
+      Job(/*processing_time=*/3, /*required_machines=*/1),
+      Job(/*processing_time=*/3, /*required_machines=*/1),
+      Job(/*processing_time=*/3, /*required_machines=*/1),
+      Job(/*processing_time=*/3, /*required_machines=*/1)
+    };
+  
+    Schedule::balanced_list_schedule(jobs, sigma1, sigma2, /*balance_time=*/h, p_max);
+
+    EXPECT_EQ(h, 4);
+    EXPECT_EQ(sigma1.placed_jobs.size(), 2);
+    EXPECT_EQ(sigma2.placed_jobs.size(), 3);
+
+    EXPECT_EQ(sigma1.placed_jobs[0].starting_time.value(), 0);
+    EXPECT_EQ(sigma1.placed_jobs[1].starting_time.value(), 0);
+
+    EXPECT_EQ(sigma2.placed_jobs[0].starting_time.value(), 0);
+    EXPECT_EQ(sigma2.placed_jobs[1].starting_time.value(), 3);
+    EXPECT_EQ(sigma2.placed_jobs[2].starting_time.value(), 3);
+  }
+}
 
 
+TEST(Schedule_Tests, BalancedListSchedule2BalanceTime) {
+  uint m = 10;
+  uint n = 100;
+  Schedule sigma1(m,n);
+  Schedule sigma2(m,n);
+
+  sigma1.gap_manager->gaps[0]=2;
+  sigma1.gap_manager->gaps[2]=1;
+  sigma1.gap_manager->gaps[5]=1;
+  sigma1.gap_manager->gaps[8]=6;
+
+  sigma1.gap_manager->available_machines_in_gap=2;
+  sigma1.gap_manager->makespan=8;
+
+  sigma2.gap_manager->gaps[0]=1;
+  sigma2.gap_manager->gaps[3]=1;
+  sigma2.gap_manager->gaps[4]=4;
+  sigma2.gap_manager->gaps[6]=1;
+  sigma2.gap_manager->gaps[8]=1;
+  sigma2.gap_manager->gaps[10]=2;
+
+  sigma2.gap_manager->available_machines_in_gap=1;
+  sigma2.gap_manager->makespan=10;
+
+  sint h = 6;
+  uint p_max = 4;
+
+  {
+    Job_List jobs = {
+      Job(/*processing_time=*/3, /*required_machines=*/1),
+      Job(/*processing_time=*/3, /*required_machines=*/1),
+      Job(/*processing_time=*/3, /*required_machines=*/1),
+      Job(/*processing_time=*/3, /*required_machines=*/1),
+      Job(/*processing_time=*/3, /*required_machines=*/1),
+      Job(/*processing_time=*/3, /*required_machines=*/1),
+      Job(/*processing_time=*/3, /*required_machines=*/1),
+      Job(/*processing_time=*/3, /*required_machines=*/1),
+      Job(/*processing_time=*/3, /*required_machines=*/1),
+      Job(/*processing_time=*/3, /*required_machines=*/1),
+      Job(/*processing_time=*/3, /*required_machines=*/1),
+      Job(/*processing_time=*/3, /*required_machines=*/1)
+    };
+  
+    Schedule::balanced_list_schedule(jobs, sigma1, sigma2, /*balance_time=*/h, p_max);
+
+    EXPECT_EQ(h, 2);
+
+    EXPECT_EQ(sigma1.placed_jobs.size(), 5);
+    EXPECT_EQ(sigma2.placed_jobs.size(), 7);
+  }
+}
 
 
+TEST(Schedule_Tests, BalancedListScheduleZeroBalanceTime) {
+  uint m = 4;
+  uint n = 100;
+  Schedule sigma1(m,n);
+  Schedule sigma2(m,n);
 
+  sigma1.gap_manager->gaps[0]=2;
+  sigma1.gap_manager->gaps[5]=2;
+
+  sigma1.gap_manager->available_machines_in_gap=2;
+  sigma1.gap_manager->makespan=5;
+
+  sigma2.gap_manager->gaps[0]=2;
+  sigma2.gap_manager->gaps[8]=2;
+
+  sigma2.gap_manager->available_machines_in_gap=2;
+  sigma2.gap_manager->makespan=8;
+
+  sint h = 2;
+  uint p_max = 3;
+
+  {
+    Job_List jobs = {
+      Job(/*processing_time=*/3, /*required_machines=*/2),
+      Job(/*processing_time=*/3, /*required_machines=*/2),
+      Job(/*processing_time=*/3, /*required_machines=*/2),
+      Job(/*processing_time=*/3, /*required_machines=*/2),
+      Job(/*processing_time=*/3, /*required_machines=*/2),
+      Job(/*processing_time=*/3, /*required_machines=*/2),
+      Job(/*processing_time=*/3, /*required_machines=*/2)
+    };
+  
+    Schedule::balanced_list_schedule(jobs, sigma1, sigma2, /*balance_time=*/h, p_max);
+
+    EXPECT_EQ(h, -3);
+    EXPECT_EQ(sigma1.placed_jobs.size(), 3);
+    EXPECT_EQ(sigma2.placed_jobs.size(), 4);
+  }
+}
 
 
 
