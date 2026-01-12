@@ -27,7 +27,7 @@ class Tower_Schedule {
 
     sigma1.list_schedule(big_jobs);
     jobs = sigma1.schedule_down(medium_jobs + small_jobs);
-    uint separation time = get_separation_time_from_sigma1(sigma1);
+    uint separation time = get_separation_time_from_sigma1(sigma1); // TODO
     sigma1.list_schedule(tiny_jobs, until_t=separation_time);
 
 
@@ -41,21 +41,17 @@ class Tower_Schedule {
     
     if(tiny_jobs.size() != 0) { // many tiny jobs
       Job_List small_and_medium_jobs = 
-        remove_small_and_medium_jobs_from_schedule(sigma1);
+        remove_small_and_medium_jobs_from_schedule(sigma1); // TODO
       
       uint height_of_removed_jobs = height(small_and_medium_jobs);
 
       sigma2_makespan = sigma2.get_makespan();
-      remove_tiny_jobs(sigma2); 
+      remove_tiny_jobs(sigma2);  // TODO
       sigma2.sort_in_higher_stack(small_and_medium_jobs);
 
-      // TODO: list_scheduling_in_higher_gap(sigma1, sigma2);
-      uint time1 = sigma1.get_makespan() - height_of_removed_jobs;
-      uint time2 = sigma2.get_makespan() - height_of_removed_jobs;
-      Schedule::balanced_list_scheduling(tiny_jobs, sigma1, time1, sigma2, time2);
+      Schedule::balanced_list_scheduling(tiny_jobs, sigma1, sigma2, height_of_removed_jobs);
 
     } else { // few or several tiny jobs
-      // TODO (during p_max down. where the last job is \leq 4/3)
       sigma1.split_at(separation_time, sigma1T, sigma1B);       
 
       sigma2.remove_jobs_above(highest_tiny_job_completion_time);
@@ -67,10 +63,15 @@ class Tower_Schedule {
     }
   }
 
-  // TODO: schedule.unschedule_jobs();
-
   void partition_jobs(Job_List jobs) {
 
+  }
+
+  uint height(Job_List jobs) {
+    uint sum = 0;
+    for(auto job : jobs) 
+      sum += job.processing_time;
+    return sum;
   }
 
   Job_List remove_small_and_medium_jobs_from_schedule(Schedule schedule) {

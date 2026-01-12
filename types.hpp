@@ -213,9 +213,12 @@ public:
   }
 
   // Expects sorted list of indices
+  // returns unscheduled jobs
   // TODO: does not affect the makespan. 
-  void unschedule_jobs(vector<uint> placed_jobs_indices) {
+  Job_List unschedule_jobs(vector<uint> placed_jobs_indices) {
     Job_List new_jobs;
+    Job_List removed_jobs;
+
     int current_index = 0;
     for(int i = 0; i < n; i++) {
       if(current_index == placed_jobs_indices.size())
@@ -229,12 +232,15 @@ public:
         gap_manager->add_additional_machines_at(time,                    +job.required_machines); 
         gap_manager->add_additional_machines_at(time+job.processing_time,-job.required_machines);
         current_index += 1;
+        job.starting_time.reset();
+        removed_jobs.push_back(job);
       }
       else 
         new_jobs.push_back(job);
     }
 
     placed_jobs = new_jobs;
+    return removed_jobs;
   }
 
   // list schedules jobs without letting the differences of jobs placed be more than p_max
@@ -292,10 +298,7 @@ public:
 
   // jobs need to have machine requirement at most m/2
   void on_two_stacks(Job_List jobs) {
-    // sort decreasingly by required_machines
-    sort(jobs.begin(), jobs.end(), [](const Job& j1, const Job& j2) {
-        return j1.required_machines > j2.required_machines;
-    });
+    sort_jobs_decreasingly_by_required_machines(jobs);
 
     Job dummy_job(1, 1);    // required_machines = 1
     Gap_Manager dummy_gap_manager = *gap_manager;
@@ -311,14 +314,17 @@ public:
     }
   }
 
+  void sort_jobs_decreasingly_by_required_machines(Job_List& jobs) {
+    sort(jobs.begin(), jobs.end(), [](const Job& j1, const Job& j2) {
+        return j1.required_machines > j2.required_machines;
+    });
+  }
+
   // returns a list of jobs which were not schedule during this step
   // starts at the top and places repeatedly the widest job which fits directly below the last one
   // assumes the existing jobs are decreasingly placed in machine_requirement
   Job_List schedule_down(Job_List jobs) {
-    // sort decreasingly by required_machines
-    sort(jobs.begin(), jobs.end(), [](const Job& j1, const Job& j2) {
-        return j1.required_machines > j2.required_machines;
-    });
+    sort_jobs_decreasingly_by_required_machines(jobs);
 
     map<uint,uint> inverse_absolute_gaps = gap_manager->build_inverse_absolute_gaps();
     uint makespan = gap_manager->get_makespan();
@@ -365,6 +371,53 @@ public:
     return gap_manager->get_makespan();
   }
 
+  // assumes that the current schedule is valid for this operation
+  // TODO: no jobs in stacks
+  void sort_in_higher_stack(Job_List jobs) {
+    Job_List jobs_on_higher_stack = jobs;
+    Job_List jobs_on_lower_stack;
+
+    if(placed_jobs.size() == 0) {
+      jobs_on_higher_stack = jobs;
+    } 
+    else {
+      // the last placed job is on the higher stack 
+      Job last_job = placed_jobs[placed_jobs.size()-1];
+      uint current_time = last_job.starting_time.value();
+      
+      for(uint i=placed_jobs.size()-1; i>= 0; i--) {
+        Job job = placed_jobs[i];
+        // from there go down and get all jobs which are placed directly below
+        if(current_time == job.processing_time + job.starting_time.value()){
+          jobs_on_higher_stack.push_back(job);
+          current_time = job.starting_time.value();
+        }
+        else {
+          jobs_on_lower_stack.push_back(job);
+        }
+      }
+    }
+    sort_jobs_decreasingly_by_required_machines(jobs_on_higher_stack);
+    sort_jobs_decreasingly_by_required_machines(jobs_on_lower_stack);
+
+    // create new gap manager and iterate through jobs in stacks and place them
+    gap_manager = make_shared<Gap_Manager>(m);
+    placed_jobs = {};
+    
+    schedule_jobs_on_top_of_each_other(jobs_on_higher_stack);
+    schedule_jobs_on_top_of_each_other(jobs_on_lower_stack);
+    
+  }
+
+  void schedule_jobs_on_top_of_each_other(Job_List jobs, uint start_time=0) {
+    for(auto job : jobs) {
+      schedule_job(job, start_time);
+      start_time += job.processing_time;
+    }
+  }
+
+
+
 private:
 
   // until_t ensures that no job will be executed after until_t
@@ -396,6 +449,18 @@ private:
         schedule_job(large_job, time);
         job_pool.erase(large_job_iterator);
       }
+  }
+
+  // returns the removed jobs
+  Job_List remove_jobs_above(uint time) {
+    vector<uint> remove_indices;
+    for(int i=0; i<placed_jobs.size(); i++) {
+      Job job = placed_jobs[i];
+      if(job.starting_time.value() > time)
+        remove_indices.push_back(i);
+    }
+    
+    return unschedule_jobs(remove_indices);
   }
 
 };
