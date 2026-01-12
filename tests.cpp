@@ -591,3 +591,70 @@ TEST(Schedule_Tests, SortInHigherStack) {
   EXPECT_EQ(schedule.placed_jobs[9].required_machines, 2);
 }
 
+
+TEST(Schedule_Tests, RemoveJobsAbove) {
+  uint m = 13;
+  uint n = 100;
+  Schedule schedule(m,n);
+
+  Job J1 = Job(/*processing_time=*/2, /*required_machines=*/ 6);
+  J1.starting_time = 0;
+  Job J2 = Job(/*processing_time=*/2, /*required_machines=*/ 6);
+  J2.starting_time = 0;
+  Job J3 = Job(/*processing_time=*/3, /*required_machines=*/ 5);
+  J3.starting_time = 2;
+  Job J4 = Job(/*processing_time=*/2, /*required_machines=*/ 5);
+  J4.starting_time = 2;
+  Job J5 = Job(/*processing_time=*/3, /*required_machines=*/ 4);
+  J5.starting_time = 4;
+  Job J6 = Job(/*processing_time=*/3, /*required_machines=*/ 3);
+  J6.starting_time = 5;
+  Job J7 = Job(/*processing_time=*/2, /*required_machines=*/ 3);
+  J7.starting_time = 7;
+  Job J8 = Job(/*processing_time=*/3, /*required_machines=*/ 1);
+  J8.starting_time = 8;
+
+  schedule.placed_jobs = {
+    J1, J2, J3, J4, J5, J6, J7, J8
+  };
+
+  schedule.gap_manager->makespan = 11;
+  schedule.gap_manager->available_machines_in_gap = 1;
+
+  schedule.gap_manager->gaps[0] = 1;
+  schedule.gap_manager->gaps[2] = 2;
+  schedule.gap_manager->gaps[4] = 1;
+  schedule.gap_manager->gaps[5] = 2;
+  schedule.gap_manager->gaps[7] = 1;
+  schedule.gap_manager->gaps[8] = 2;
+  schedule.gap_manager->gaps[9] = 2;
+  schedule.gap_manager->gaps[11] = 1;
+
+  Job_List removed_jobs = schedule.remove_jobs_above(5);
+  
+  EXPECT_EQ(removed_jobs.size(), 4);
+  EXPECT_EQ(schedule.placed_jobs.size(), 4);
+
+  EXPECT_EQ(removed_jobs[0].starting_time.has_value(), 0);
+  EXPECT_EQ(removed_jobs[0].processing_time, 3);
+  EXPECT_EQ(removed_jobs[0].required_machines, 4);
+
+  EXPECT_EQ(removed_jobs[1].starting_time.has_value(), 0);
+  EXPECT_EQ(removed_jobs[1].processing_time, 3);
+  EXPECT_EQ(removed_jobs[1].required_machines, 3);
+
+  EXPECT_EQ(removed_jobs[2].starting_time.has_value(), 0);
+  EXPECT_EQ(removed_jobs[2].processing_time, 2);
+  EXPECT_EQ(removed_jobs[2].required_machines, 3);
+
+  EXPECT_EQ(removed_jobs[3].starting_time.has_value(), 0);
+  EXPECT_EQ(removed_jobs[3].processing_time, 3);
+  EXPECT_EQ(removed_jobs[3].required_machines, 1);
+
+
+  EXPECT_EQ(schedule.placed_jobs[0].starting_time.has_value(), 1);
+  EXPECT_EQ(schedule.placed_jobs[0].processing_time, 2);
+  EXPECT_EQ(schedule.placed_jobs[0].required_machines, 6);
+}
+
+

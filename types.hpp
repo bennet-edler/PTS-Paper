@@ -424,6 +424,17 @@ public:
   }
 
 
+  // returns the removed jobs
+  Job_List remove_jobs_above(uint time) {
+    vector<uint> remove_indices;
+    for(int i = 0; i < placed_jobs.size(); i++) {
+      Job job = placed_jobs[i];
+      if(job.starting_time.value() + job.processing_time > time)
+        remove_indices.push_back(i);
+    }
+    
+    return unschedule_jobs(remove_indices);
+  }
 
 private:
 
@@ -458,17 +469,6 @@ private:
       }
   }
 
-  // returns the removed jobs
-  Job_List remove_jobs_above(uint time) {
-    vector<uint> remove_indices;
-    for(int i=0; i<placed_jobs.size(); i++) {
-      Job job = placed_jobs[i];
-      if(job.starting_time.value() > time)
-        remove_indices.push_back(i);
-    }
-    
-    return unschedule_jobs(remove_indices);
-  }
 
 };
 

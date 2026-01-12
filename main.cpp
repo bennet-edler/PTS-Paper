@@ -27,7 +27,7 @@ class Tower_Schedule {
 
     sigma1.list_schedule(big_jobs);
     jobs = sigma1.schedule_down(medium_jobs + small_jobs);
-    uint separation time = get_separation_time_from_sigma1(sigma1); // TODO
+    uint separation time = get_separation_time_from_sigma1(sigma1, p_max); // TODO
     sigma1.list_schedule(tiny_jobs, until_t=separation_time);
 
 
