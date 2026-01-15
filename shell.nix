@@ -7,7 +7,7 @@ pkgs.mkShell {
     git
     gtest # google test
     #gnumake
-    #gdb            # Debugger
+    gdb            # Debugger
     #pkg-config
   ];
 

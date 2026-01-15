@@ -24,3 +24,10 @@ cmake --build build
 ```bash
 ./build/run_tests
 ```
+
+### Build in Debug Mode
+```bash
+cmake -B build -D CMAKE_BUILD_TYPE=Debug
+```
+
+

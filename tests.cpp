@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include "types.hpp"
+#include "tower_schedule.hpp"
 
 // INDEX TREE
 TEST(Index_Tree_Tests, GetNextGap_GetsCorrectGap) {
@@ -532,7 +533,7 @@ TEST(Schedule_Tests, BalancedListScheduleZeroBalanceTime) {
 
 TEST(Schedule_Tests, SortInHigherStack) {
   uint m = 13;
-  uint n = 100;
+  uint n = 9;
   Schedule schedule(m,n);
   
   Job J1 = Job(/*processing_time=*/2, /*required_machines=*/ 6);
@@ -594,7 +595,7 @@ TEST(Schedule_Tests, SortInHigherStack) {
 
 TEST(Schedule_Tests, RemoveJobsAbove) {
   uint m = 13;
-  uint n = 100;
+  uint n = 8;
   Schedule schedule(m,n);
 
   Job J1 = Job(/*processing_time=*/2, /*required_machines=*/ 6);
@@ -657,7 +658,79 @@ TEST(Schedule_Tests, RemoveJobsAbove) {
   EXPECT_EQ(schedule.placed_jobs[0].required_machines, 6);
 }
 
-/* TEST(Tower_Schedule_Tests, Makespan_Example1) { */
+TEST(Tower_Schedule_Tests, Sigma1Example) {
+  uint m = 100;
+  uint n = 20;
 
-/* } */
+  // big
+  Job J1 = Job(/*processing_time=*/30, /*required_machines=*/ 100);
+  Job J2 = Job(/*processing_time=*/10, /*required_machines=*/ 90);
+  Job J3 = Job(/*processing_time=*/10, /*required_machines=*/ 80);
+  Job J4 = Job(/*processing_time=*/50, /*required_machines=*/ 60);
+
+  // medium
+  Job J5 = Job(/*processing_time=*/10, /*required_machines=*/ 40);
+  Job J6 = Job(/*processing_time=*/20, /*required_machines=*/ 35);
+
+  // small
+  Job J7 = Job(/*processing_time=*/10, /*required_machines=*/ 30);
+  Job J8 = Job(/*processing_time=*/10, /*required_machines=*/ 26);
+
+  Job_List jobs = {J1,J2,J3,J4,J5,J6,J7,J8};
+
+  Tower_Schedule tower_schedule(m,n);
+  tower_schedule.schedule_jobs(jobs);
+
+  EXPECT_EQ(tower_schedule.sigma.get_makespan(), 100);
+
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[0].starting_time.value(), 0);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[1].starting_time.value(), 30);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[2].starting_time.value(), 40);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[3].starting_time.value(), 50);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[4].starting_time.value(), 50);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[5].starting_time.value(), 60);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[6].starting_time.value(), 70);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[7].starting_time.value(), 90);
+}
+
+TEST(Tower_Schedule_Tests, Sigma2Example) {
+  uint m = 100;
+  uint n = 20;
+
+  // medium
+  Job J1  = Job(/*processing_time=*/20, /*required_machines=*/ 50);
+  Job J2  = Job(/*processing_time=*/10, /*required_machines=*/ 50);
+  Job J3  = Job(/*processing_time=*/30, /*required_machines=*/ 40);
+  Job J4  = Job(/*processing_time=*/20, /*required_machines=*/ 40);
+  Job J5  = Job(/*processing_time=*/20, /*required_machines=*/ 35);
+  Job J6  = Job(/*processing_time=*/20, /*required_machines=*/ 30);
+  Job J7  = Job(/*processing_time=*/20, /*required_machines=*/ 30);
+  Job J8  = Job(/*processing_time=*/20, /*required_machines=*/ 30);
+  Job J9  = Job(/*processing_time=*/20, /*required_machines=*/ 30);
+  Job J10 = Job(/*processing_time=*/20, /*required_machines=*/ 30);
+
+  // tiny
+  Job J11 = Job(/*processing_time=*/20, /*required_machines=*/ 10);
+  Job J12 = Job(/*processing_time=*/10, /*required_machines=*/ 20);
+
+  Job_List jobs = {J1,J2,J3,J4,J5,J6,J7,J8,J9,J10,J11,J12};
+
+  Tower_Schedule tower_schedule(m,n);
+  tower_schedule.schedule_jobs(jobs);
+  
+  EXPECT_EQ(tower_schedule.sigma.get_makespan(), 80);
+
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[0].starting_time.value(), 0);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[1].starting_time.value(), 0);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[2].starting_time.value(), 10);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[3].starting_time.value(), 10);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[4].starting_time.value(), 20);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[5].starting_time.value(), 30);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[6].starting_time.value(), 40);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[7].starting_time.value(), 40);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[8].starting_time.value(), 40);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[9].starting_time.value(), 60);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[10].starting_time.value(),60);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[11].starting_time.value(),60);
+}
 

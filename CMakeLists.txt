@@ -14,6 +14,7 @@ include(GoogleTest)
 add_library(lib 
   types.cc
   types.hpp
+  tower_schedule.hpp
 )
 target_include_directories(lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 

@@ -51,6 +51,19 @@ std::vector<Job> operator+(std::vector<Job>& lhs, std::vector<Job>& rhs) {
 
 typedef vector<Job> Job_List;
 
+// DEBUG
+void print_jobs(Job_List jobs) {
+  if(jobs.size() == 0) {
+    cout << "EMPTY LIST OF JOBS" << endl;
+  }
+  for(auto job : jobs) {
+    cout << "processing_time: " << job.processing_time << ", required_machines: " << job.required_machines;
+    if(job.starting_time.has_value())
+      cout << ", starting_time: " << job.starting_time.value();
+    cout << endl;
+  } cout << endl;
+}
+
 struct Gap {
   uint time;                // time where the gap occurs
   sint additional_machines; // machines more available at that time than in the previous gap;
@@ -209,7 +222,7 @@ public:
   /* Gap_List gap_list; */
 
   Schedule(uint m, uint n) 
-    : m(m)
+    : m(m), n(n)
   {
     if(m<2)
       throw runtime_error("need to have at least 2 machines");
@@ -231,22 +244,20 @@ public:
     placed_jobs.push_back(job);
   }
 
-  // Expects sorted list of indices
+  // Expects sorted (by starting_time) list of indices
   // returns unscheduled jobs
   // TODO: does not affect the makespan. 
   Job_List unschedule_jobs(vector<uint> placed_jobs_indices) {
+    sort(placed_jobs_indices.begin(), placed_jobs_indices.end()); // redundant
+
     Job_List new_jobs;
     Job_List removed_jobs;
 
     int current_index = 0;
-    for(int i = 0; i < n; i++) {
-      if(current_index == placed_jobs_indices.size())
-        break;
-
+    for(int i = 0; i < placed_jobs.size(); i++) {
       Job job = placed_jobs[i];
-      int next_remove_index = placed_jobs_indices[current_index];
 
-      if(i == next_remove_index) {
+      if(current_index < placed_jobs_indices.size() && i == placed_jobs_indices[current_index]) {
         uint time = job.starting_time.value();
         gap_manager->add_additional_machines_at(time,                    +job.required_machines); 
         gap_manager->add_additional_machines_at(time+job.processing_time,-job.required_machines);
@@ -257,6 +268,7 @@ public:
       else 
         new_jobs.push_back(job);
     }
+    print_jobs(new_jobs);
 
     placed_jobs = new_jobs;
     return removed_jobs;
@@ -316,6 +328,9 @@ public:
       stop = list_schedule_single(/*jobs=*/jobs, /*job_pool=*/job_pool,until_t);
 
     jobs = update_remaining_jobs_with_job_pool(jobs, job_pool);
+    
+    sort_jobs_increasingly_by_starting_time(placed_jobs);
+
     return stop;
   }
 
