@@ -8,6 +8,8 @@ class Tower_Schedule {
   Schedule sigma1;
   Schedule sigma2;
 
+  Schedule sigma;
+
   Job_List tiny_jobs;
   Job_List small_jobs;
   Job_List medium_jobs;
@@ -17,7 +19,7 @@ class Tower_Schedule {
   uint n;
 
   Tower_Schedule(uint m, uint n) 
-    : m(m), n(n), sigma1(m,n), sigma2(m,n)
+    : m(m), n(n), sigma1(m,n), sigma2(m,n), sigma(m,n)
   {}
 
   bool is_tiny_job(Job job) {
@@ -71,6 +73,9 @@ class Tower_Schedule {
       sigma2.sort_in_higher_stack(small_and_medium_jobs);
 
       Schedule::balanced_list_schedule(tiny_jobs, sigma1, sigma2, /*balance_height=*/height_of_removed_jobs, p_max);
+      sigma.place_schedule_on_top(sigma1);
+      sigma2 = sigma2.get_rotated_schedule();
+      sigma.place_schedule_on_top(sigma2);
     } else { // few or several tiny jobs
       Schedule sigma1T(m,n), sigma1B(m,n);
       sigma1.split_at(separation_time, sigma1T, sigma1B);       
@@ -78,8 +83,9 @@ class Tower_Schedule {
       Job_List removed_jobs = sigma2.remove_jobs_above(highest_tiny_job_completion_time);
       sigma2.list_schedule(removed_jobs);
 
-      sigma1B.place_schedule_on_top(sigma2); 
-      sigma1B.place_schedule_on_top(sigma1T);
+      sigma.place_schedule_on_top(sigma1B);
+      sigma.place_schedule_on_top(sigma2);
+      sigma.place_schedule_on_top(sigma1T);
     }
   }
 

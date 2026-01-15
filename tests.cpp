@@ -657,4 +657,7 @@ TEST(Schedule_Tests, RemoveJobsAbove) {
   EXPECT_EQ(schedule.placed_jobs[0].required_machines, 6);
 }
 
+/* TEST(Tower_Schedule_Tests, Makespan_Example1) { */
+
+/* } */
 

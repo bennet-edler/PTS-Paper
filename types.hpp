@@ -490,6 +490,14 @@ public:
     schedule = Schedule(schedule.m, schedule.n);
   }
 
+  Schedule get_rotated_schedule() {
+    Schedule rotated_schedule(m,n);
+    uint makespan = get_makespan();
+    for(auto job : placed_jobs)
+      schedule_job(job,/*time=*/makespan-job.starting_time.value()-job.processing_time);
+    return rotated_schedule;
+  }
+
 private:
 
   // until_t ensures that no job will be executed after until_t
@@ -525,6 +533,7 @@ private:
       job_pool.erase(large_job_iterator);
       return false;
   }
+
 
 
 };
