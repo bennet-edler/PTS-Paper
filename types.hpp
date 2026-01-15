@@ -30,6 +30,25 @@ public:
   optional<uint> starting_time;
 };
 
+std::vector<Job> operator+(std::vector<Job>& lhs, std::vector<Job>& rhs) {
+    std::vector<Job> result;
+    result.reserve(lhs.size() + rhs.size());
+
+    result.insert(result.end(), 
+                  std::make_move_iterator(lhs.begin()), 
+                  std::make_move_iterator(lhs.end()));
+                  
+    result.insert(result.end(), 
+                  std::make_move_iterator(rhs.begin()), 
+                  std::make_move_iterator(rhs.end()));
+
+    lhs.clear();
+    rhs.clear();
+
+    return result;
+}
+
+
 typedef vector<Job> Job_List;
 
 struct Gap {
@@ -289,11 +308,27 @@ public:
     return job_pool;
   }
 
-  void list_schedule(Job_List jobs, uint until_t=INVALID_TIME) {
+  bool list_schedule(Job_List& jobs, uint until_t=INVALID_TIME) {
     multiset<pair<uint, size_t>> job_pool = create_job_pool(jobs);
 
-    while(!job_pool.empty())
-      list_schedule_single(/*jobs=*/jobs, /*job_pool=*/job_pool,until_t);
+    bool stop = false;
+    while(!job_pool.empty() && !stop)
+      stop = list_schedule_single(/*jobs=*/jobs, /*job_pool=*/job_pool,until_t);
+
+    jobs = update_remaining_jobs_with_job_pool(jobs, job_pool);
+    return stop;
+  }
+
+  Job_List update_remaining_jobs_with_job_pool(Job_List jobs, multiset<pair<uint, size_t>> &job_pool) {
+    Job_List new_jobs;
+    while(!job_pool.empty()){ 
+      auto next_job_iterator = job_pool.begin(); 
+      uint next_job_index = next_job_iterator->second;
+      Job next_job = jobs[next_job_index];
+      new_jobs.push_back(next_job);
+      job_pool.erase(next_job_iterator);
+    }
+    return new_jobs;
   }
 
   // jobs need to have machine requirement at most m/2
@@ -377,6 +412,10 @@ public:
     return gap_manager->get_makespan();
   }
 
+  void set_makespan(uint new_makespan) {
+    gap_manager->makespan = new_makespan;
+  }
+
   // assumes that the current schedule is valid for this operation
   // TODO: no jobs in stacks
   void sort_in_higher_stack(Job_List jobs) {
@@ -424,23 +463,39 @@ public:
   }
 
 
-  // returns the removed jobs
-  Job_List remove_jobs_above(uint time) {
-    vector<uint> remove_indices;
-    for(int i = 0; i < placed_jobs.size(); i++) {
-      Job job = placed_jobs[i];
-      if(job.starting_time.value() + job.processing_time > time)
+  template<typename Predicate>
+  Job_List remove_jobs_if(Predicate should_remove) {
+    std::vector<uint> remove_indices;
+    
+    for (uint i = 0; i < placed_jobs.size(); ++i) {
+      if (should_remove(placed_jobs[i])) {
         remove_indices.push_back(i);
+      }
     }
     
     return unschedule_jobs(remove_indices);
+  }
+
+  // returns the removed jobs
+  Job_List remove_jobs_above(uint time) {
+    return remove_jobs_if([time](const Job& job) {
+      return job.starting_time.value() + job.processing_time > time;
+    });
+  }
+
+  void place_schedule_on_top(Schedule& schedule) {
+    for(auto job : schedule.placed_jobs) 
+      schedule_job(job);
+
+    schedule = Schedule(schedule.m, schedule.n);
   }
 
 private:
 
   // until_t ensures that no job will be executed after until_t
   // assumes job_pool.empty()==false
-  void list_schedule_single(Job_List jobs, multiset<pair<uint, size_t>> &job_pool, uint until_t=INVALID_TIME) {
+  // returns if procedure should end
+  bool list_schedule_single(Job_List jobs, multiset<pair<uint, size_t>> &job_pool, uint until_t=INVALID_TIME) {
       auto min_job_iterator = job_pool.begin(); 
       // index i with jobs[i] has lowest required machines 
       uint min_job_index = min_job_iterator->second;
@@ -463,10 +518,12 @@ private:
       uint large_job_index = large_job_iterator->second;
       Job large_job = jobs[large_job_index];
       
-      if(until_t == INVALID_TIME || until_t >= time+large_job.processing_time) {
-        schedule_job(large_job, time);
-        job_pool.erase(large_job_iterator);
-      }
+      if(until_t != INVALID_TIME && until_t < time+large_job.processing_time)
+        return true;
+
+      schedule_job(large_job, time);
+      job_pool.erase(large_job_iterator);
+      return false;
   }
 
 
