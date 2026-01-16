@@ -64,6 +64,12 @@ void sort_jobs_increasingly_by_starting_time_and_second_by_required_machines(Job
   });
 }
 
+void sort_jobs_decreasingly_by_required_machines(Job_List& jobs) {
+  sort(jobs.begin(), jobs.end(), [](const Job& j1, const Job& j2) {
+      return j1.required_machines > j2.required_machines || (j1.required_machines == j2.required_machines && j1.processing_time > j2.processing_time);
+  });
+}
+
 // DEBUG
 void print_jobs(Job_List jobs) {
   if(jobs.size() == 0) {
@@ -292,6 +298,8 @@ public:
   static void balanced_list_schedule(Job_List jobs, Schedule& sigma1, Schedule& sigma2, sint& balance_time, uint p_max) {
     uint sigma1_old_makespan = sigma1.get_makespan();
     uint sigma2_old_makespan = sigma2.get_makespan();
+    sigma1.gap_manager->reset_structure();
+    sigma2.gap_manager->reset_structure();
 
     multiset<pair<uint, size_t>> job_pool = create_job_pool(jobs);
 
@@ -299,6 +307,8 @@ public:
       uint gap_end1 = max(static_cast<sint>(sigma1_old_makespan - balance_time), 0);
       cout << "gap_end1: " << gap_end1 << endl;
       uint gap_end2 = max(static_cast<sint>(sigma2_old_makespan - balance_time), 0);
+      cout << "gap_end2: " << gap_end2 << endl;
+      cout << "balance_time: " << balance_time << endl;
 
       sigma1.list_schedule_single(/*jobs=*/jobs, /*job_pool=*/job_pool, /*until_t=*/gap_end1);
       if(job_pool.empty())
@@ -313,12 +323,22 @@ public:
       uint min_job_index = min_job_iterator->second;
       Job min_job = jobs[min_job_index];
 
-      uint g1 = gap_end1-sigma1.gap_manager->update_earliest_time_to_place(min_job);
-      uint g2 = gap_end2-sigma2.gap_manager->update_earliest_time_to_place(min_job);
+      /* uint g1 = gap_end1-sigma1.gap_manager->update_earliest_time_to_place(min_job); */
+      /* uint g2 = gap_end2-sigma2.gap_manager->update_earliest_time_to_place(min_job); */
+      uint earliest_time_to_place_a_job1 = sigma1.gap_manager->update_earliest_time_to_place(min_job);
+      cout << "earliest_time_to_place_a_job1: " << earliest_time_to_place_a_job1 << endl;
+      uint earliest_time_to_place_a_job2 = sigma2.gap_manager->update_earliest_time_to_place(min_job);
+      cout << "earliest_time_to_place_a_job2: " << earliest_time_to_place_a_job2 << endl;
+      uint g1 = max(0, static_cast<sint>(gap_end1-earliest_time_to_place_a_job1));
+      uint g2 = max(0, static_cast<sint>(gap_end2-earliest_time_to_place_a_job2));
+      cout << "g1: " << g1 << endl;
+      cout << "g2: " << g2 << endl;
+
 
       // update balance_time so that we have afterwards p_max time available in the larger gap 
       // where the actual gap is the time between g1 and balance_time
-      balance_time -= p_max - max(g1,g2);
+      if(g1 < min_job.processing_time && g2 < min_job.processing_time) 
+        balance_time -= min_job.processing_time - max(g1,g2);
     }
     sort_jobs_increasingly_by_starting_time(sigma1.placed_jobs);
     sort_jobs_increasingly_by_starting_time(sigma2.placed_jobs);
@@ -377,11 +397,6 @@ public:
     }
   }
 
-  void sort_jobs_decreasingly_by_required_machines(Job_List& jobs) {
-    sort(jobs.begin(), jobs.end(), [](const Job& j1, const Job& j2) {
-        return j1.required_machines > j2.required_machines;
-    });
-  }
 
 
   // returns a list of jobs which were not schedule during this step
@@ -451,7 +466,9 @@ public:
     else {
       // the last placed job is on the higher stack 
       Job last_job = placed_jobs[placed_jobs.size()-1];
-      uint current_time = last_job.starting_time.value()+last_job.processing_time;
+      uint current_time = get_makespan();
+      cout << "makespan: " << get_makespan() << endl;
+      cout << "current_time: " << current_time << endl;
       
       for(int i=placed_jobs.size()-1; i>=0; i--) {
         Job job = placed_jobs[i];
@@ -465,6 +482,8 @@ public:
         }
       }
     }
+    cout << "jobs_in_higher_stack" << endl;
+    print_jobs(jobs_on_higher_stack);
     sort_jobs_decreasingly_by_required_machines(jobs_on_higher_stack);
     sort_jobs_decreasingly_by_required_machines(jobs_on_lower_stack);
 

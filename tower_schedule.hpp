@@ -52,7 +52,7 @@ public:
       = sigma1.schedule_down(medium_jobs + small_jobs);
     uint separation_time = get_separation_time_from_sigma1(sigma1); 
     sigma1.list_schedule(tiny_jobs, /*until_t=*/separation_time); 
-    cout << "sigma1 jobs: expected empty" << endl;
+    cout << "sigma1 jobs" << endl;
     print_jobs(sigma1.placed_jobs);
 
     sigma2.on_two_stacks(remaining_medium_and_small_jobs);
@@ -65,7 +65,7 @@ public:
     cout << "schedule tiny jobs" << endl;
     print_jobs(sigma2.placed_jobs);
     uint highest_tiny_job_completion_time = sigma2.get_makespan();
-    sigma2.set_makespan(max(sigma2_makespan, highest_tiny_job_completion_time));
+    sigma2.set_makespan(sigma2_makespan);
     
     if(tiny_jobs.size() != 0) { // many tiny jobs
       Job_List small_and_medium_jobs = 
@@ -81,6 +81,8 @@ public:
       cout << "jobs after sorting in higher stack" << endl;
       print_jobs(sigma2.placed_jobs);
 
+      cout << "balance time: " << height_of_removed_jobs << endl;
+      cout << "m1: " << sigma1.get_makespan() << ", m2: " << sigma2.get_makespan() << endl;
       Schedule::balanced_list_schedule(tiny_jobs, sigma1, sigma2, /*balance_height=*/height_of_removed_jobs, p_max);
       cout << "jobs after balanced_list_schedule" << endl;
       cout << "sigma2: " << endl;
@@ -94,6 +96,12 @@ public:
       print_jobs(sigma2.placed_jobs);
       sigma.place_schedule_on_top(sigma2);
     } else { // few or several tiny jobs
+      
+      cout << "sigma2: " << endl;
+      print_jobs(sigma2.placed_jobs);
+      cout << "sigma1: " << endl;
+      print_jobs(sigma1.placed_jobs);
+
       Schedule sigma1T(m,n), sigma1B(m,n);
       sigma1.split_at(separation_time, sigma1T, sigma1B);       
 
@@ -165,6 +173,7 @@ public:
     Job biggest_small_job(/*processing_time=*/1, /*required_machines=*/m/3); 
     uint tau = sigma1.gap_manager->update_earliest_time_to_place(biggest_small_job);
     sigma1.gap_manager->reset_structure();
+    cout << "separation_time: " << tau << endl;
 
     return tau;
   }
