@@ -50,7 +50,8 @@ public:
 
     Job_List remaining_medium_and_small_jobs 
       = sigma1.schedule_down(medium_jobs + small_jobs);
-    uint separation_time = get_separation_time_from_sigma1(sigma1); 
+    bool skip_to_many_jobs;
+    uint separation_time = get_separation_time_from_sigma1(sigma1, p_max, skip_to_many_jobs); 
     sigma1.list_schedule(tiny_jobs, /*until_t=*/separation_time); 
     cout << "sigma1 jobs" << endl;
     print_jobs(sigma1.placed_jobs);
@@ -67,7 +68,7 @@ public:
     uint highest_tiny_job_completion_time = sigma2.get_makespan();
     sigma2.set_makespan(sigma2_makespan);
     
-    if(tiny_jobs.size() != 0) { // many tiny jobs
+    if(tiny_jobs.size() != 0 || skip_to_many_jobs) { // many tiny jobs
       Job_List small_and_medium_jobs = 
         remove_small_and_medium_jobs(sigma1); 
       cout << "removed_jobs" << endl;
@@ -83,7 +84,7 @@ public:
 
       cout << "balance time: " << height_of_removed_jobs << endl;
       cout << "m1: " << sigma1.get_makespan() << ", m2: " << sigma2.get_makespan() << endl;
-      Schedule::balanced_list_schedule(tiny_jobs, sigma1, sigma2, /*balance_height=*/height_of_removed_jobs, p_max);
+      Schedule::balanced_list_schedule(tiny_jobs, sigma1, sigma2, /*balance_height=*/height_of_removed_jobs);
       cout << "jobs after balanced_list_schedule" << endl;
       cout << "sigma2: " << endl;
       print_jobs(sigma2.placed_jobs);
@@ -168,11 +169,19 @@ public:
   // TODO: make helper function in schedule to avoid acessing gap_manager
   // find earliest time tau where machine usage is <= 2/3 m
   // if there is no such time tau=makespan
-  uint get_separation_time_from_sigma1(Schedule sigma1) {
+  uint get_separation_time_from_sigma1(Schedule sigma1, uint p_max, bool& skip_to_many_jobs) {
     sigma1.gap_manager->reset_structure();
     Job biggest_small_job(/*processing_time=*/1, /*required_machines=*/m/3); 
     uint tau = sigma1.gap_manager->update_earliest_time_to_place(biggest_small_job);
     sigma1.gap_manager->reset_structure();
+
+    Job biggest_small_job(/*processing_time=*/p_max, /*required_machines=*/m/3); 
+    uint tau_prime = sigma1.gap_manager->update_earliest_time_to_place(biggest_small_job);
+    
+    skip_to_many_jobs = (tau == tau_prime);
+      // tau is invalid. means we skip to many tiny jobs.
+
+
     cout << "separation_time: " << tau << endl;
 
     return tau;

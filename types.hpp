@@ -295,7 +295,7 @@ public:
 
   // list schedules jobs without letting the differences of jobs placed be more than p_max
   // makespan - balance_time is the initial upper_bound to not place jobs above
-  static void balanced_list_schedule(Job_List jobs, Schedule& sigma1, Schedule& sigma2, sint& balance_time, uint p_max) {
+  static void balanced_list_schedule(Job_List jobs, Schedule& sigma1, Schedule& sigma2, sint& balance_time) {
     uint sigma1_old_makespan = sigma1.get_makespan();
     uint sigma2_old_makespan = sigma2.get_makespan();
     sigma1.gap_manager->reset_structure();
