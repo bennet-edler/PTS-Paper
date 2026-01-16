@@ -70,16 +70,28 @@ public:
     if(tiny_jobs.size() != 0) { // many tiny jobs
       Job_List small_and_medium_jobs = 
         remove_small_and_medium_jobs(sigma1); 
+      cout << "removed_jobs" << endl;
+      print_jobs(small_and_medium_jobs);
       
       sint height_of_removed_jobs = static_cast<sint>(height(small_and_medium_jobs));
 
       Job_List additional_tiny_jobs = remove_tiny_jobs(sigma2); 
       tiny_jobs = tiny_jobs + additional_tiny_jobs;
       sigma2.sort_in_higher_stack(small_and_medium_jobs);
+      cout << "jobs after sorting in higher stack" << endl;
+      print_jobs(sigma2.placed_jobs);
 
       Schedule::balanced_list_schedule(tiny_jobs, sigma1, sigma2, /*balance_height=*/height_of_removed_jobs, p_max);
+      cout << "jobs after balanced_list_schedule" << endl;
+      cout << "sigma2: " << endl;
+      print_jobs(sigma2.placed_jobs);
+      cout << "sigma1: " << endl;
+      print_jobs(sigma1.placed_jobs);
+
       sigma.place_schedule_on_top(sigma1);
       sigma2 = sigma2.get_rotated_schedule();
+      cout << "jobs after rotating" << endl;
+      print_jobs(sigma2.placed_jobs);
       sigma.place_schedule_on_top(sigma2);
     } else { // few or several tiny jobs
       Schedule sigma1T(m,n), sigma1B(m,n);

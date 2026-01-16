@@ -734,3 +734,173 @@ TEST(Tower_Schedule_Tests, Sigma2Example) {
   EXPECT_EQ(tower_schedule.sigma.placed_jobs[11].starting_time.value(),60);
 }
 
+TEST(Tower_Schedule_Tests, Sigma2Example2) {
+  uint m = 100;
+  uint n = 20;
+
+  // medium
+  Job J1  = Job(/*processing_time=*/20, /*required_machines=*/ 50);
+  Job J2  = Job(/*processing_time=*/10, /*required_machines=*/ 50);
+  Job J3  = Job(/*processing_time=*/30, /*required_machines=*/ 40);
+  Job J4  = Job(/*processing_time=*/20, /*required_machines=*/ 40);
+  Job J5  = Job(/*processing_time=*/20, /*required_machines=*/ 35);
+  Job J6  = Job(/*processing_time=*/20, /*required_machines=*/ 30);
+  Job J7  = Job(/*processing_time=*/20, /*required_machines=*/ 30);
+  Job J8  = Job(/*processing_time=*/20, /*required_machines=*/ 30);
+  Job J9  = Job(/*processing_time=*/20, /*required_machines=*/ 30);
+  Job J10 = Job(/*processing_time=*/20, /*required_machines=*/ 30);
+
+  // tiny
+  Job J11 = Job(/*processing_time=*/20, /*required_machines=*/ 10);
+  Job J12 = Job(/*processing_time=*/10, /*required_machines=*/ 20);
+  Job J13 = Job(/*processing_time=*/10, /*required_machines=*/ 20);
+
+  Job_List jobs = {J1,J2,J3,J4,J5,J6,J7,J8,J9,J10,J11,J12,J13};
+
+  Tower_Schedule tower_schedule(m,n);
+  tower_schedule.schedule_jobs(jobs);
+  
+  EXPECT_EQ(tower_schedule.sigma.get_makespan(), 90);
+
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[0].starting_time.value(), 0);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[1].starting_time.value(), 0);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[2].starting_time.value(), 10);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[3].starting_time.value(), 10);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[4].starting_time.value(), 20);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[5].starting_time.value(), 30);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[6].starting_time.value(), 40);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[7].starting_time.value(), 40);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[8].starting_time.value(), 40);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[9].starting_time.value(), 50);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[10].starting_time.value(),60);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[11].starting_time.value(),60);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[12].starting_time.value(),70);
+
+}
+
+
+TEST(Tower_Schedule_Tests, Sigma2Example3) {
+  uint m = 100;
+  uint n = 20;
+
+  // medium
+  Job J1  = Job(/*processing_time=*/20, /*required_machines=*/ 50);
+  Job J2  = Job(/*processing_time=*/10, /*required_machines=*/ 50);
+  Job J3  = Job(/*processing_time=*/30, /*required_machines=*/ 40);
+  Job J4  = Job(/*processing_time=*/20, /*required_machines=*/ 40);
+  Job J5  = Job(/*processing_time=*/20, /*required_machines=*/ 35);
+  Job J6  = Job(/*processing_time=*/20, /*required_machines=*/ 30);
+  Job J7  = Job(/*processing_time=*/20, /*required_machines=*/ 30);
+  Job J8  = Job(/*processing_time=*/20, /*required_machines=*/ 30);
+  Job J9  = Job(/*processing_time=*/20, /*required_machines=*/ 30);
+  Job J10 = Job(/*processing_time=*/20, /*required_machines=*/ 30);
+
+  // tiny
+  Job J11 = Job(/*processing_time=*/20, /*required_machines=*/ 10);
+  Job J12 = Job(/*processing_time=*/10, /*required_machines=*/ 20);
+  Job J13 = Job(/*processing_time=*/10, /*required_machines=*/ 20);
+  Job J14 = Job(/*processing_time=*/10, /*required_machines=*/ 20);
+  Job J15 = Job(/*processing_time=*/10, /*required_machines=*/ 20);
+  Job J16 = Job(/*processing_time=*/10, /*required_machines=*/ 20);
+  Job J17 = Job(/*processing_time=*/10, /*required_machines=*/ 20);
+  Job J18 = Job(/*processing_time=*/10, /*required_machines=*/ 20);
+  Job J19 = Job(/*processing_time=*/10, /*required_machines=*/ 20);
+  Job J20 = Job(/*processing_time=*/10, /*required_machines=*/ 20);
+
+  Job_List jobs = {J1,J2,J3,J4,J5,J6,J7,J8,J9,J10,J11,J12,J13,J14,J15,J16,J17,J18,J19,J20};
+
+  Tower_Schedule tower_schedule(m,n);
+  tower_schedule.schedule_jobs(jobs);
+  
+  EXPECT_EQ(tower_schedule.sigma.get_makespan(), 100);
+
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[0].starting_time.value(), 0);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[1].starting_time.value(), 0);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[2].starting_time.value(), 10);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[3].starting_time.value(), 10);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[4].starting_time.value(), 20);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[5].starting_time.value(), 30);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[6].starting_time.value(), 40);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[7].starting_time.value(), 40);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[8].starting_time.value(), 40);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[9].starting_time.value(), 50);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[10].starting_time.value(),60);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[11].starting_time.value(),60);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[12].starting_time.value(),60);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[13].starting_time.value(),60);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[14].starting_time.value(),70);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[15].starting_time.value(),70);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[16].starting_time.value(),80);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[17].starting_time.value(),80);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[18].starting_time.value(),80);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[19].starting_time.value(),80);
+}
+
+
+TEST(Tower_Schedule_Tests, Sigma2Example4) {
+  uint m = 100;
+  uint n = 20;
+
+  // medium
+  Job J1  = Job(/*processing_time=*/20, /*required_machines=*/ 50);
+  Job J2  = Job(/*processing_time=*/10, /*required_machines=*/ 50);
+  Job J3  = Job(/*processing_time=*/30, /*required_machines=*/ 40);
+  Job J4  = Job(/*processing_time=*/20, /*required_machines=*/ 40);
+  Job J5  = Job(/*processing_time=*/20, /*required_machines=*/ 35);
+  Job J6  = Job(/*processing_time=*/20, /*required_machines=*/ 30);
+  Job J7  = Job(/*processing_time=*/20, /*required_machines=*/ 30);
+  Job J8  = Job(/*processing_time=*/20, /*required_machines=*/ 30);
+  Job J9  = Job(/*processing_time=*/20, /*required_machines=*/ 30);
+  Job J10 = Job(/*processing_time=*/20, /*required_machines=*/ 30);
+
+  // tiny
+  Job J11 = Job(/*processing_time=*/20, /*required_machines=*/ 10);
+  Job J12 = Job(/*processing_time=*/10, /*required_machines=*/ 20);
+  Job J13 = Job(/*processing_time=*/10, /*required_machines=*/ 20);
+  Job J14 = Job(/*processing_time=*/10, /*required_machines=*/ 20);
+  Job J15 = Job(/*processing_time=*/10, /*required_machines=*/ 20);
+  Job J16 = Job(/*processing_time=*/10, /*required_machines=*/ 20);
+  Job J17 = Job(/*processing_time=*/10, /*required_machines=*/ 20);
+  Job J18 = Job(/*processing_time=*/10, /*required_machines=*/ 20);
+  Job J19 = Job(/*processing_time=*/10, /*required_machines=*/ 20);
+  Job J20 = Job(/*processing_time=*/10, /*required_machines=*/ 20);
+  Job J21 = Job(/*processing_time=*/10, /*required_machines=*/ 20);
+  Job J22 = Job(/*processing_time=*/10, /*required_machines=*/ 20);
+  Job J23 = Job(/*processing_time=*/10, /*required_machines=*/ 20);
+
+  Job_List jobs = {J1,J2,J3,J4,J5,J6,J7,J8,J9,J10,J11,J12,J13,J14,J15,J16,J17,J18,J19,J20,J21,J22,J23};
+
+  Tower_Schedule tower_schedule(m,n);
+  tower_schedule.schedule_jobs(jobs);
+  
+  EXPECT_EQ(tower_schedule.sigma.get_makespan(), 110);
+
+  cout << "result: " << endl;
+  print_jobs(tower_schedule.sigma.placed_jobs);
+
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[0].starting_time.value(), 0);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[1].starting_time.value(), 0);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[2].starting_time.value(), 0);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[3].starting_time.value(), 0);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[4].starting_time.value(), 10);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[5].starting_time.value(), 10);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[6].starting_time.value(), 10);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[7].starting_time.value(), 20);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[8].starting_time.value(), 20);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[9].starting_time.value(), 20);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[10].starting_time.value(),30);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[11].starting_time.value(),30);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[12].starting_time.value(),30);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[13].starting_time.value(),40);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[14].starting_time.value(),40);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[15].starting_time.value(),50);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[16].starting_time.value(),50);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[17].starting_time.value(),60);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[18].starting_time.value(),60);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[19].starting_time.value(),70);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[20].starting_time.value(),70);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[21].starting_time.value(),80);
+  EXPECT_EQ(tower_schedule.sigma.placed_jobs[22].starting_time.value(),100);
+}
+
+

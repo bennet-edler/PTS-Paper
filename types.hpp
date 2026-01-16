@@ -8,6 +8,7 @@
 #include <set>
 #include <algorithm>
 #include <memory>
+#include <ranges>
 
 // order statistic tree
 #include <ext/pb_ds/assoc_container.hpp>
@@ -50,6 +51,18 @@ std::vector<Job> operator+(std::vector<Job>& lhs, std::vector<Job>& rhs) {
 
 
 typedef vector<Job> Job_List;
+
+void sort_jobs_increasingly_by_starting_time(Job_List& jobs) {
+  sort(jobs.begin(), jobs.end(), [](const Job& j1, const Job& j2) {
+      return j1.starting_time < j2.starting_time || (j1.starting_time == j2.starting_time && j1.required_machines > j2.required_machines);
+  });
+}
+
+void sort_jobs_increasingly_by_starting_time_and_second_by_required_machines(Job_List& jobs) {
+  sort(jobs.begin(), jobs.end(), [](const Job& j1, const Job& j2) {
+      return j1.starting_time < j2.starting_time || (j1.starting_time == j2.starting_time && j1.required_machines < j2.required_machines);
+  });
+}
 
 // DEBUG
 void print_jobs(Job_List jobs) {
@@ -283,16 +296,17 @@ public:
     multiset<pair<uint, size_t>> job_pool = create_job_pool(jobs);
 
     while(!job_pool.empty()) {
-      uint gap_end1 = sigma1_old_makespan - balance_time;
-      uint gap_end2 = sigma2_old_makespan - balance_time;
+      uint gap_end1 = max(static_cast<sint>(sigma1_old_makespan - balance_time), 0);
+      cout << "gap_end1: " << gap_end1 << endl;
+      uint gap_end2 = max(static_cast<sint>(sigma2_old_makespan - balance_time), 0);
 
       sigma1.list_schedule_single(/*jobs=*/jobs, /*job_pool=*/job_pool, /*until_t=*/gap_end1);
       if(job_pool.empty())
-        return;
+        break;
 
       sigma2.list_schedule_single(/*jobs=*/jobs, /*job_pool=*/job_pool, /*until_t=*/gap_end2);
       if(job_pool.empty())
-        return;
+        break;
 
       // get larger gap
       auto min_job_iterator = job_pool.begin(); 
@@ -305,10 +319,9 @@ public:
       // update balance_time so that we have afterwards p_max time available in the larger gap 
       // where the actual gap is the time between g1 and balance_time
       balance_time -= p_max - max(g1,g2);
-      
-
     }
-
+    sort_jobs_increasingly_by_starting_time(sigma1.placed_jobs);
+    sort_jobs_increasingly_by_starting_time(sigma2.placed_jobs);
   }
 
   static multiset<pair<uint, size_t>> create_job_pool(Job_List jobs) {
@@ -370,11 +383,6 @@ public:
     });
   }
 
-  void sort_jobs_increasingly_by_starting_time(Job_List& jobs) {
-    sort(jobs.begin(), jobs.end(), [](const Job& j1, const Job& j2) {
-        return j1.starting_time < j2.starting_time || (j1.starting_time == j2.starting_time && j1.required_machines > j2.required_machines);
-    });
-  }
 
   // returns a list of jobs which were not schedule during this step
   // starts at the top and places repeatedly the widest job which fits directly below the last one
@@ -499,6 +507,9 @@ public:
   }
 
   void place_schedule_on_top(Schedule& schedule) {
+    sort_jobs_increasingly_by_starting_time_and_second_by_required_machines(schedule.placed_jobs);
+    cout << "place_schedule_on_top" << endl;
+    print_jobs(schedule.placed_jobs);
     for(auto job : schedule.placed_jobs) 
       schedule_job(job);
 
@@ -508,8 +519,11 @@ public:
   Schedule get_rotated_schedule() {
     Schedule rotated_schedule(m,n);
     uint makespan = get_makespan();
-    for(auto job : placed_jobs)
-      schedule_job(job,/*time=*/makespan-job.starting_time.value()-job.processing_time);
+    for(auto job : placed_jobs | views::reverse)
+      rotated_schedule.schedule_job(job,/*time=*/makespan-job.starting_time.value()-job.processing_time);
+
+    sort_jobs_increasingly_by_starting_time(rotated_schedule.placed_jobs);
+
     return rotated_schedule;
   }
 
