@@ -1,4 +1,8 @@
+#pragma once
+
 #include "types.hpp"
+#include "gap_manager.hpp"
+#include "schedule.hpp"
 
 
 class Tower_Schedule {
@@ -16,175 +20,29 @@ public:
   uint m;
   uint n;
 
-  Tower_Schedule(uint m, uint n) 
-    : m(m), n(n), sigma1(m,n), sigma2(m,n), sigma(m,n)
-  {}
+  Tower_Schedule(uint m, uint n);
 
-  bool is_tiny_job(Job job) {
-    return 4*job.required_machines <= m;
-  }
+  bool is_tiny_job(Job job);
 
-  bool is_small_job(Job job) {
-    return m < 4*job.required_machines && 3*job.required_machines <= m;
-  }
+  bool is_small_job(Job job);
 
-  bool is_medium_job(Job job) {
-    return m < 3*job.required_machines && 2*job.required_machines <= m;
-  }
+  bool is_medium_job(Job job);
 
-  bool is_big_job(Job job) {
-    return m < 2*job.required_machines;
-  }
+  bool is_big_job(Job job);
 
+  void schedule_jobs(Job_List jobs);
 
+  void partition_jobs(Job_List jobs);
 
-  void schedule_jobs(Job_List jobs) {
-    uint p_max = 0;
-    for(const auto& job : jobs)
-      p_max = max(p_max, job.processing_time);
+  uint height(Job_List jobs);
 
+  Job_List remove_small_and_medium_jobs(Schedule& schedule);
 
-    partition_jobs(jobs); 
-
-    sigma1.list_schedule(big_jobs);
-
-    Job_List remaining_medium_and_small_jobs 
-      = sigma1.schedule_down(medium_jobs + small_jobs);
-    bool skip_to_many_jobs;
-    uint separation_time = get_separation_time_from_sigma1(sigma1, p_max, skip_to_many_jobs); 
-    sigma1.list_schedule(tiny_jobs, /*until_t=*/separation_time); 
-    cout << "sigma1 jobs" << endl;
-    print_jobs(sigma1.placed_jobs);
-
-    sigma2.on_two_stacks(remaining_medium_and_small_jobs);
-    cout << "schedule on stacks" << endl;
-    print_jobs(sigma2.placed_jobs);
-
-    uint sigma2_makespan = sigma2.get_makespan();
-    sigma2.set_makespan(0);
-    sigma2.list_schedule(tiny_jobs, /*until_t=*/sigma2_makespan);
-    cout << "schedule tiny jobs" << endl;
-    print_jobs(sigma2.placed_jobs);
-    uint highest_tiny_job_completion_time = sigma2.get_makespan();
-    sigma2.set_makespan(sigma2_makespan);
-    
-    if(tiny_jobs.size() != 0 || skip_to_many_jobs) { // many tiny jobs
-      Job_List small_and_medium_jobs = 
-        remove_small_and_medium_jobs(sigma1); 
-      cout << "removed_jobs" << endl;
-      print_jobs(small_and_medium_jobs);
-      
-      sint height_of_removed_jobs = static_cast<sint>(height(small_and_medium_jobs));
-
-      Job_List additional_tiny_jobs = remove_tiny_jobs(sigma2); 
-      tiny_jobs = tiny_jobs + additional_tiny_jobs;
-      sigma2.sort_in_higher_stack(small_and_medium_jobs);
-      cout << "jobs after sorting in higher stack" << endl;
-      print_jobs(sigma2.placed_jobs);
-
-      cout << "balance time: " << height_of_removed_jobs << endl;
-      cout << "m1: " << sigma1.get_makespan() << ", m2: " << sigma2.get_makespan() << endl;
-      Schedule::balanced_list_schedule(tiny_jobs, sigma1, sigma2, /*balance_height=*/height_of_removed_jobs);
-      cout << "jobs after balanced_list_schedule" << endl;
-      cout << "sigma2: " << endl;
-      print_jobs(sigma2.placed_jobs);
-      cout << "sigma1: " << endl;
-      print_jobs(sigma1.placed_jobs);
-
-      sigma.place_schedule_on_top(sigma1);
-      sigma2 = sigma2.get_rotated_schedule();
-      cout << "jobs after rotating" << endl;
-      print_jobs(sigma2.placed_jobs);
-      sigma.place_schedule_on_top(sigma2);
-    } else { // few or several tiny jobs
-      
-      cout << "sigma2: " << endl;
-      print_jobs(sigma2.placed_jobs);
-      cout << "sigma1: " << endl;
-      print_jobs(sigma1.placed_jobs);
-
-      Schedule sigma1T(m,n), sigma1B(m,n);
-      sigma1.split_at(separation_time, sigma1T, sigma1B);       
-
-      Job_List removed_jobs = sigma2.remove_jobs_above(highest_tiny_job_completion_time);
-      cout << "remove jobs above highest tiny" << endl;
-      print_jobs(sigma2.placed_jobs);
-      
-      sigma2.list_schedule(removed_jobs);
-      cout << "list schedule removed jobs" << endl;
-      print_jobs(sigma2.placed_jobs);
-
-      sigma.place_schedule_on_top(sigma1B);
-      sigma.place_schedule_on_top(sigma2);
-      sigma.place_schedule_on_top(sigma1T);
-    }
-  }
-
-  void partition_jobs(Job_List jobs) {
-    tiny_jobs = {};
-    small_jobs = {};
-    medium_jobs = {};
-    big_jobs = {};
-
-    for(const auto& job : jobs) {
-      if(is_tiny_job(job)) {
-        tiny_jobs.push_back(job);
-      }
-
-      else if(is_small_job(job)){
-        small_jobs.push_back(job);
-      }
-
-      else if(is_medium_job(job)){
-        medium_jobs.push_back(job);
-      }
-
-      else if(is_big_job(job)){
-        big_jobs.push_back(job);
-      }
-    }
-    jobs = {};
-
-  }
-
-  uint height(Job_List jobs) {
-    uint sum = 0;
-    for(auto job : jobs) 
-      sum += job.processing_time;
-    return sum;
-  }
-
-  Job_List remove_small_and_medium_jobs(Schedule& schedule) {
-      return schedule.remove_jobs_if([this](const Job& j) {
-          return is_small_job(j) || is_medium_job(j);
-      });
-  }
-
-  Job_List remove_tiny_jobs(Schedule& schedule) {
-      return schedule.remove_jobs_if([this](const Job& j) {
-          return is_tiny_job(j);
-      });
-  }
+  Job_List remove_tiny_jobs(Schedule& schedule);
 
   // TODO: make helper function in schedule to avoid acessing gap_manager
   // find earliest time tau where machine usage is <= 2/3 m
   // if there is no such time tau=makespan
-  uint get_separation_time_from_sigma1(Schedule sigma1, uint p_max, bool& skip_to_many_jobs) {
-    sigma1.gap_manager->reset_structure();
-    Job biggest_small_job(/*processing_time=*/1, /*required_machines=*/m/3); 
-    uint tau = sigma1.gap_manager->update_earliest_time_to_place(biggest_small_job);
-    sigma1.gap_manager->reset_structure();
-
-    Job biggest_small_job(/*processing_time=*/p_max, /*required_machines=*/m/3); 
-    uint tau_prime = sigma1.gap_manager->update_earliest_time_to_place(biggest_small_job);
-    
-    skip_to_many_jobs = (tau == tau_prime);
-      // tau is invalid. means we skip to many tiny jobs.
-
-
-    cout << "separation_time: " << tau << endl;
-
-    return tau;
-  }
+  uint get_separation_time_from_sigma1(Schedule sigma1, uint p_max, bool& skip_to_many_jobs);
 
 };

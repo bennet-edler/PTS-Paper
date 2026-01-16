@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include "types.hpp"
+#include "gap_manager.hpp"
+#include "schedule.hpp"
 #include "tower_schedule.hpp"
 
 // INDEX TREE
