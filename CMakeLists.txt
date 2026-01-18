@@ -20,6 +20,8 @@ add_library(pts_lib
   schedule.cc
   tower_schedule.hpp
   tower_schedule.cc
+  mcs.hpp
+  mcs.cc
 )
 target_include_directories(pts_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
