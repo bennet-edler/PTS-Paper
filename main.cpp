@@ -24,10 +24,11 @@ Job_List generate_random_jobs(uint n, uint m, uint p_min = 1, uint p_max = 100) 
 
 int main() {
 
-  uint m = 100;
-  uint n = 100000;
+  uint m = 100000;
+  uint n = 10000;
+  uint p_max = 100;
 
-  auto jobs = generate_random_jobs(n,m);
+  auto jobs = generate_random_jobs(n,m,1,p_max);
   Tower_Schedule tower_schedule(m,n);
   
   cout << "start benchmarking for " << n << " job on " << m << " machines..." << endl;
@@ -41,4 +42,6 @@ int main() {
   cout << "took " << duration.count() << " ms" << endl;
 
   cout << "makespan: " << tower_schedule.sigma.get_makespan() << endl;
+
+  cout << "ratio is at least " << tower_schedule.sigma.get_makespan()/tower_schedule.sigma.calculate_makespan_lower_bound(p_max) << endl;
 }

@@ -47,8 +47,8 @@ public:
   uint get_makespan();
 
   void set_makespan(uint new_makespan);
+
   // assumes that the current schedule is valid for this operation
-  // TODO: no jobs in stacks
   void sort_in_higher_stack(Job_List jobs);
 
   void schedule_jobs_on_top_of_each_other(Job_List jobs, uint start_time=0);
@@ -72,6 +72,20 @@ public:
   void place_schedule_on_top(Schedule& schedule);
 
   Schedule get_rotated_schedule();
+
+  double calculate_makespan_lower_bound(uint p_max) const {
+    if(p_max*n*m > numeric_limits<unsigned long long>::max())
+      throw runtime_error("possible area overflow");
+
+    if (m == 0) return 0.0;
+
+    unsigned long long total_area = 0;
+    for (const auto& job : placed_jobs) {
+        total_area += static_cast<unsigned long long>(job.processing_time) * job.required_machines;
+    }
+
+    return static_cast<double>(total_area) / m;
+  }
 
 private:
 
