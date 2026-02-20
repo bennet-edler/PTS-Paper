@@ -12,25 +12,25 @@ include(GoogleTest)
 
 # header
 add_library(pts_lib 
-  types.cc
-  types.hpp
-  gap_manager.hpp
-  gap_manager.cc
-  schedule.hpp
-  schedule.cc
-  tower_schedule.hpp
-  tower_schedule.cc
-  mcs.hpp
-  mcs.cc
+  src/types.cc
+  src/types.hpp
+  src/gap_manager.hpp
+  src/gap_manager.cc
+  src/schedule.hpp
+  src/schedule.cc
+  src/tower_schedule.hpp
+  src/tower_schedule.cc
+  src/mcs.hpp
+  src/mcs.cc
 )
 target_include_directories(pts_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 # main program
-add_executable(program main.cpp)
+add_executable(program src/main.cpp)
 target_link_libraries(program pts_lib)
 
 # test program
-add_executable(run_tests tests.cpp)
+add_executable(run_tests tests/tests.cpp)
 target_link_libraries(run_tests 
   pts_lib 
   GTest::gmock
